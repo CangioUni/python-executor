@@ -1,46 +1,86 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Script Details</title>
-<style>
-pre { background:#eee; padding:10px; max-height:400px; overflow:auto; }
-.meta { color:#555; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Details - {{ name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<h1>Details for {{ name }}</h1>
-<p class="meta"><b>Path:</b> {{ script.path }}</p>
-<p class="meta"><b>Arguments:</b> {{ script.args }}</p>
-<p class="meta"><b>Restart Policy:</b> {{ script.policy }}</p>
-<p><b>Status:</b> <span id="status">{{ runtime.status }}</span></p>
-<p><b>Running Time:</b> <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s</p>
-<p><b>Last Return Code:</b> <span id="returncode">{{ runtime.returncode }}</span></p>
+    <header class="main-header">
+        <div class="header-content">
+            <h1 class="header-title">Script Details</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">← Back to Scripts</a>
+            </div>
+        </div>
+    </header>
 
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">{{ name }}</h2>
+            </div>
+            <div class="card-content">
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <span class="meta-label">Script Path</span>
+                        <code class="meta-value">{{ script.path }}</code>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Arguments</span>
+                        <code class="meta-value">{{ script.args|join(' ') if script.args else 'None' }}</code>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Restart Policy</span>
+                        <code class="meta-value">{{ script.policy }}</code>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Status</span>
+                        <span class="status status-{{ runtime.status.replace(' ', '-') }}" id="status">{{ runtime.status }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Running Time</span>
+                        <code class="meta-value" id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}s</code>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Last Return Code</span>
+                        <code class="meta-value" id="returncode">{{ runtime.returncode if runtime.returncode is not none else 'N/A' }}</code>
+                    </div>
+                </div>
 
-<h2>Console Output (live)</h2>
-<pre id="log">{{ runtime.output }}</pre>
+                <div class="btn-group mb-6">
+                    <a href="/start/{{ name }}" class="btn btn-success">Start Script</a>
+                    <a href="/stop/{{ name }}" class="btn btn-danger">Stop Script</a>
+                </div>
+            </div>
+        </div>
 
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Console Output (Live)</h3>
+            </div>
+            <div class="card-content">
+                <div class="log-container">
+                    <pre class="log-output" id="log">{{ runtime.output }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<p>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a> |
-<a href="/">Back to list</a>
-</p>
-
-
-<script>
-(function(){
-const logEl = document.getElementById('log');
-function append(text){
-logEl.textContent += text;
-logEl.scrollTop = logEl.scrollHeight;
-}
-const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
-const ws = new WebSocket(wsUrl);
-ws.onmessage = (ev) => {
-append(ev.data);
-};
-})();
-</script>
+    <script>
+    (function(){
+        const logEl = document.getElementById('log');
+        function append(text){
+            logEl.textContent += text;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
+        const ws = new WebSocket(wsUrl);
+        ws.onmessage = (ev) => {
+            append(ev.data);
+        };
+    })();
+    </script>
 </body>
 </html>

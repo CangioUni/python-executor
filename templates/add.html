@@ -1,22 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Add Script</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Script - Script Manager</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<h1>Add New Script</h1>
-<form method="post">
-<label>Script Path: <input type="text" name="path" required style="width:400px"></label><br><br>
-<label>Arguments: <input type="text" name="args" placeholder="e.g. --foo 123"></label><br><br>
-<label>Restart Policy:
-<select name="policy">
-<option value="never">never</option>
-<option value="on-failure" selected>on-failure</option>
-<option value="always">always</option>
-</select>
-</label><br><br>
-<button type="submit">Add</button>
-</form>
-<p><a href="/">Back to list</a></p>
+    <header class="main-header">
+        <div class="header-content">
+            <h1 class="header-title">Add New Script</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">← Back to Scripts</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Script Configuration</h2>
+            </div>
+            <div class="card-content">
+                <form method="post">
+                    <div class="form-group">
+                        <label for="path" class="form-label">Script Path *</label>
+                        <input 
+                            type="text" 
+                            id="path" 
+                            name="path" 
+                            class="form-input" 
+                            required 
+                            placeholder="/path/to/your/script.py"
+                            aria-describedby="path-help"
+                        >
+                        <small id="path-help" class="text-sm" style="color: var(--gray-600); margin-top: var(--spacing-1); display: block;">
+                            Enter the full path to your Python script
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="args" class="form-label">Arguments</label>
+                        <input 
+                            type="text" 
+                            id="args" 
+                            name="args" 
+                            class="form-input" 
+                            placeholder="--flag value --another-flag"
+                            aria-describedby="args-help"
+                        >
+                        <small id="args-help" class="text-sm" style="color: var(--gray-600); margin-top: var(--spacing-1); display: block;">
+                            Optional command line arguments for your script
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="policy" class="form-label">Restart Policy</label>
+                        <select id="policy" name="policy" class="form-select" aria-describedby="policy-help">
+                            <option value="never">Never - Don't restart automatically</option>
+                            <option value="on-failure" selected>On Failure - Restart only if script exits with error</option>
+                            <option value="always">Always - Always restart the script</option>
+                        </select>
+                        <small id="policy-help" class="text-sm" style="color: var(--gray-600); margin-top: var(--spacing-1); display: block;">
+                            Choose when the script should be automatically restarted
+                        </small>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary btn-lg">Add Script</button>
+                        <a href="/" class="btn btn-secondary btn-lg">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

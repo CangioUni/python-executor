@@ -1,0 +1,9 @@
+{
+  "test_script.py": {
+    "path": "/home/runner/work/web-interface/web-interface/test_script.py",
+    "args": [
+      "--verbose"
+    ],
+    "policy": "on-failure"
+  }
+}
