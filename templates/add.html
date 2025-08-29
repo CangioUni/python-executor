@@ -1,22 +1,174 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Add Script</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Script - Script Manager</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<h1>Add New Script</h1>
-<form method="post">
-<label>Script Path: <input type="text" name="path" required style="width:400px"></label><br><br>
-<label>Arguments: <input type="text" name="args" placeholder="e.g. --foo 123"></label><br><br>
-<label>Restart Policy:
-<select name="policy">
-<option value="never">never</option>
-<option value="on-failure" selected>on-failure</option>
-<option value="always">always</option>
-</select>
-</label><br><br>
-<button type="submit">Add</button>
-</form>
-<p><a href="/">Back to list</a></p>
+    <header class="header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="/">Scripts</a> / Add New Script
+            </div>
+            <h1>Add New Script</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="card" style="max-width: 600px; margin: 0 auto;">
+            <div class="card-header">
+                <h2>Script Configuration</h2>
+                <div style="font-size: 0.875rem; color: var(--gray-500); margin-top: 0.25rem;">
+                    Configure a new Python script to be managed by the system
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" id="add-script-form">
+                    <div class="form-group">
+                        <label for="path" class="form-label">
+                            Script Path *
+                        </label>
+                        <input 
+                            type="text" 
+                            id="path"
+                            name="path" 
+                            class="form-input" 
+                            required 
+                            placeholder="/path/to/your/script.py"
+                            autocomplete="off"
+                        >
+                        <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">
+                            Full path to the Python script file
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="args" class="form-label">
+                            Command Line Arguments
+                        </label>
+                        <input 
+                            type="text" 
+                            id="args"
+                            name="args" 
+                            class="form-input" 
+                            placeholder="--config /path/to/config.json --verbose"
+                            autocomplete="off"
+                        >
+                        <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">
+                            Optional arguments to pass to the script (space-separated)
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="policy" class="form-label">
+                            Restart Policy
+                        </label>
+                        <select id="policy" name="policy" class="form-select">
+                            <option value="never">Never - Don't restart the script</option>
+                            <option value="on-failure" selected>On Failure - Restart only if script exits with error</option>
+                            <option value="always">Always - Always restart the script when it stops</option>
+                        </select>
+                        <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">
+                            Determines when the script should be automatically restarted
+                        </div>
+                    </div>
+
+                    <div class="action-group">
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17,21 17,13 7,13 7,21"></polyline>
+                                <polyline points="7,3 7,8 15,8"></polyline>
+                            </svg>
+                            Add Script
+                        </button>
+                        <a href="/" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                                <path d="M18 6 6 18"></path>
+                                <path d="m6 6 12 12"></path>
+                            </svg>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Help Section -->
+        <div class="card mt-4" style="max-width: 600px; margin: 2rem auto 0;">
+            <div class="card-header">
+                <h3>Help & Examples</h3>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-700);">Example Script Paths:</h4>
+                    <ul style="font-size: 0.875rem; color: var(--gray-600); margin-left: 1rem;">
+                        <li><code>/home/user/scripts/monitor.py</code></li>
+                        <li><code>/opt/myapp/worker.py</code></li>
+                        <li><code>./scripts/data_processor.py</code></li>
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-700);">Example Arguments:</h4>
+                    <ul style="font-size: 0.875rem; color: var(--gray-600); margin-left: 1rem;">
+                        <li><code>--config config.json --debug</code></li>
+                        <li><code>--input data.csv --output results.txt</code></li>
+                        <li><code>--port 8080 --host 0.0.0.0</code></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-700);">Restart Policies:</h4>
+                    <ul style="font-size: 0.875rem; color: var(--gray-600); margin-left: 1rem;">
+                        <li><strong>Never:</strong> Script runs once and stops</li>
+                        <li><strong>On Failure:</strong> Restarts only if script crashes or returns error code</li>
+                        <li><strong>Always:</strong> Restarts script regardless of how it exits</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    document.getElementById('add-script-form').addEventListener('submit', function(e) {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const pathInput = document.getElementById('path');
+        
+        // Basic validation
+        if (!pathInput.value.trim()) {
+            e.preventDefault();
+            pathInput.focus();
+            pathInput.style.borderColor = 'var(--error-color)';
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; animation: spin 1s linear infinite;">
+                <path d="M21 12a9 9 0 11-6.219-8.56"></path>
+            </svg>
+            Adding Script...
+        `;
+        submitBtn.disabled = true;
+    });
+    
+    // Reset border color on input
+    document.getElementById('path').addEventListener('input', function() {
+        this.style.borderColor = '';
+    });
+    
+    // Add spin animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+    </script>
 </body>
 </html>

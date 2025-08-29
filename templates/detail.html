@@ -1,46 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Script Details</title>
-<style>
-pre { background:#eee; padding:10px; max-height:400px; overflow:auto; }
-.meta { color:#555; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ name }} - Script Details</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<h1>Details for {{ name }}</h1>
-<p class="meta"><b>Path:</b> {{ script.path }}</p>
-<p class="meta"><b>Arguments:</b> {{ script.args }}</p>
-<p class="meta"><b>Restart Policy:</b> {{ script.policy }}</p>
-<p><b>Status:</b> <span id="status">{{ runtime.status }}</span></p>
-<p><b>Running Time:</b> <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s</p>
-<p><b>Last Return Code:</b> <span id="returncode">{{ runtime.returncode }}</span></p>
+    <header class="header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="/">Scripts</a> / {{ name }}
+            </div>
+            <h1>{{ name }}</h1>
+        </div>
+    </header>
 
+    <main class="container">
+        <!-- Script Metadata -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2>Script Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <div class="meta-label">Script Path</div>
+                        <div class="meta-value font-mono">{{ script.path }}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Arguments</div>
+                        <div class="meta-value font-mono">
+                            {% if script.args %}{{ script.args|join(' ') }}{% else %}None{% endif %}
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Restart Policy</div>
+                        <div class="meta-value">{{ script.policy }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<h2>Console Output (live)</h2>
-<pre id="log">{{ runtime.output }}</pre>
+        <!-- Runtime Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2>Runtime Status</h2>
+            </div>
+            <div class="card-body">
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <div class="meta-label">Current Status</div>
+                        <div class="meta-value">
+                            <span class="status" id="status">{{ runtime.status }}</span>
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Running Time</div>
+                        <div class="meta-value" id="running-time">
+                            {% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}s{% else %}0s{% endif %}
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Last Return Code</div>
+                        <div class="meta-value" id="returncode">
+                            {% if runtime.returncode is not none %}{{ runtime.returncode }}{% else %}N/A{% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-group mt-4">
+                    <a href="/start/{{ name }}" class="btn btn-success">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                            <polygon points="5,3 19,12 5,21"></polygon>
+                        </svg>
+                        Start Script
+                    </a>
+                    <a href="/stop/{{ name }}" class="btn btn-danger">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                            <rect x="6" y="6" width="12" height="12"></rect>
+                        </svg>
+                        Stop Script
+                    </a>
+                    <a href="/" class="btn btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                            <path d="m12 19-7-7 7-7"></path>
+                            <path d="M19 12H5"></path>
+                        </svg>
+                        Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
 
+        <!-- Console Output -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Console Output (Live)</h2>
+                <div style="font-size: 0.875rem; color: var(--gray-500);">
+                    Real-time output from the script execution
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="log-container" id="log">{{ runtime.output }}</div>
+            </div>
+        </div>
+    </main>
 
-<p>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a> |
-<a href="/">Back to list</a>
-</p>
-
-
-<script>
-(function(){
-const logEl = document.getElementById('log');
-function append(text){
-logEl.textContent += text;
-logEl.scrollTop = logEl.scrollHeight;
-}
-const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
-const ws = new WebSocket(wsUrl);
-ws.onmessage = (ev) => {
-append(ev.data);
-};
-})();
-</script>
+    <script>
+    (function(){
+        const logEl = document.getElementById('log');
+        const statusEl = document.getElementById('status');
+        let isUserScrolling = false;
+        let scrollTimeout;
+        
+        function append(text){
+            logEl.textContent += text;
+            
+            // Auto-scroll to bottom unless user is scrolling
+            if (!isUserScrolling) {
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+        }
+        
+        function updateStatus(status) {
+            if (statusEl) {
+                statusEl.textContent = status;
+                statusEl.className = 'status status-' + status.replace(/\s+/g,'-');
+            }
+        }
+        
+        // Detect user scrolling
+        logEl.addEventListener('scroll', () => {
+            isUserScrolling = true;
+            clearTimeout(scrollTimeout);
+            
+            // Reset auto-scroll after 3 seconds of no scrolling
+            scrollTimeout = setTimeout(() => {
+                isUserScrolling = false;
+            }, 3000);
+            
+            // If user scrolls to bottom, enable auto-scroll
+            if (logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 10) {
+                isUserScrolling = false;
+            }
+        });
+        
+        // WebSocket for logs
+        const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
+        const ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+            console.log('Log WebSocket connected');
+        };
+        
+        ws.onmessage = (ev) => {
+            append(ev.data);
+        };
+        
+        ws.onerror = (error) => {
+            console.error('Log WebSocket error:', error);
+        };
+        
+        ws.onclose = () => {
+            console.log('Log WebSocket disconnected');
+            append('\n[Connection lost - attempting to reconnect...]\n');
+            setTimeout(() => location.reload(), 3000);
+        };
+        
+        // Status updates
+        const statusWs = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/status');
+        
+        statusWs.onmessage = (ev) => {
+            try {
+                const data = JSON.parse(ev.data);
+                if (data['{{ name }}']) {
+                    updateStatus(data['{{ name }}']);
+                }
+            } catch(e) { 
+                console.error('Error parsing status data:', e); 
+            }
+            statusWs.send('ping');
+        };
+        
+        // Update running time every second
+        let startTime = {{ runtime.start_time if runtime.start_time else 'null' }};
+        if (startTime) {
+            setInterval(() => {
+                const runningTimeEl = document.getElementById('running-time');
+                if (runningTimeEl && statusEl.textContent === 'running') {
+                    const elapsed = (Date.now() / 1000) - startTime;
+                    runningTimeEl.textContent = elapsed.toFixed(1) + 's';
+                }
+            }, 1000);
+        }
+    })();
+    </script>
 </body>
 </html>

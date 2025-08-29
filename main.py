@@ -5,6 +5,7 @@ import json
 import queue
 from pathlib import Path
 from typing import Dict, Any
+from fastapi.staticfiles import StaticFiles
 
 from fastapi import FastAPI, Request, Form, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -12,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 import uvicorn
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 SCRIPTS_DB = Path("scripts.json")
