@@ -1,46 +1,322 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="light">
 <head>
-<title>Script Details</title>
-<style>
-pre { background:#eee; padding:10px; max-height:400px; overflow:auto; }
-.meta { color:#555; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ name }} - Script Manager</title>
+    
+    <!-- Local CSS -->
+    <link href="/static/style.css" rel="stylesheet">
+    
+    <!-- Icon styles -->
+    <style>
+        .bi-arrow-left::before { content: "←"; }
+        .bi-file-earmark-code::before { content: "📄"; }
+        .bi-info-circle::before { content: "ℹ️"; }
+        .bi-file-earmark::before { content: "📄"; }
+        .bi-terminal::before { content: "💻"; }
+        .bi-arrow-repeat::before { content: "🔄"; }
+        .bi-activity::before { content: "📊"; }
+        .bi-circle-fill::before { content: "●"; }
+        .bi-clock::before { content: "🕐"; }
+        .bi-hash::before { content: "#"; }
+        .bi-tools::before { content: "🔧"; }
+        .bi-play-fill::before { content: "▶️"; }
+        .bi-stop-fill::before { content: "⏹️"; }
+        .bi-list::before { content: "📝"; }
+        .bi-trash::before { content: "🗑️"; }
+        .bi-arrow-down-circle::before { content: "⬇️"; }
+        .bi-arrow-down-circle-fill::before { content: "⬇️"; }
+        .bi-moon-fill::before { content: "🌙"; }
+        .bi-sun-fill::before { content: "☀️"; }
+        
+        .bi-arrow-left, .bi-file-earmark-code, .bi-info-circle, .bi-file-earmark,
+        .bi-terminal, .bi-arrow-repeat, .bi-activity, .bi-circle-fill, .bi-clock,
+        .bi-hash, .bi-tools, .bi-play-fill, .bi-stop-fill, .bi-list, .bi-trash,
+        .bi-arrow-down-circle, .bi-arrow-down-circle-fill, .bi-moon-fill, .bi-sun-fill {
+            font-style: normal;
+        }
+        
+        .text-primary {
+            color: var(--bs-primary) !important;
+        }
+    </style>
 </head>
 <body>
-<h1>Details for {{ name }}</h1>
-<p class="meta"><b>Path:</b> {{ script.path }}</p>
-<p class="meta"><b>Arguments:</b> {{ script.args }}</p>
-<p class="meta"><b>Restart Policy:</b> {{ script.policy }}</p>
-<p><b>Status:</b> <span id="status">{{ runtime.status }}</span></p>
-<p><b>Running Time:</b> <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s</p>
-<p><b>Last Return Code:</b> <span id="returncode">{{ runtime.returncode }}</span></p>
+    <!-- Dark Mode Toggle -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <i class="bi bi-moon-fill" id="theme-icon"></i>
+    </div>
 
+    <!-- Main Container -->
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header -->
+                <div class="d-flex align-items-center mb-4">
+                    <a href="/" class="btn btn-outline-secondary me-3" title="Back to Scripts">
+                        <i class="bi-arrow-left"></i>
+                    </a>
+                    <h1 class="display-6 mb-0">
+                        <i class="bi-file-earmark-code me-2"></i>
+                        {{ name }}
+                    </h1>
+                </div>
 
-<h2>Console Output (live)</h2>
-<pre id="log">{{ runtime.output }}</pre>
+                <div class="row">
+                    <!-- Script Information -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi-info-circle me-2"></i>
+                                    Script Information
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="bi-file-earmark me-1"></i>
+                                        Path
+                                    </span>
+                                    <span class="info-value">{{ script.path }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="bi-terminal me-1"></i>
+                                        Arguments
+                                    </span>
+                                    <span class="info-value">{{ script.args or 'None' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="bi-arrow-repeat me-1"></i>
+                                        Restart Policy
+                                    </span>
+                                    <span class="badge bg-secondary">{{ script.policy }}</span>
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- Runtime Status -->
+                        <div class="card shadow-sm mt-3">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi-activity me-2"></i>
+                                    Runtime Status
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="bi-circle-fill me-1"></i>
+                                        Status
+                                    </span>
+                                    <span class="status-badge status-{{ runtime.status.replace(' ', '-') }}" id="status">
+                                        {{ runtime.status }}
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="bi-clock me-1"></i>
+                                        Running Time
+                                    </span>
+                                    <span class="info-value" id="running-time">
+                                        {% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}s
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="bi-hash me-1"></i>
+                                        Return Code
+                                    </span>
+                                    <span class="info-value" id="returncode">{{ runtime.returncode or 'N/A' }}</span>
+                                </div>
+                            </div>
+                        </div>
 
-<p>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a> |
-<a href="/">Back to list</a>
-</p>
+                        <!-- Action Buttons -->
+                        <div class="card shadow-sm mt-3">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi-tools me-2"></i>
+                                    Actions
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="/start/{{ name }}" 
+                                       class="btn btn-success"
+                                       onclick="return confirmAction('start', '{{ name }}')"
+                                       title="Start the script">
+                                        <i class="bi-play-fill me-2"></i>
+                                        Start Script
+                                    </a>
+                                    <a href="/stop/{{ name }}" 
+                                       class="btn btn-danger"
+                                       onclick="return confirmAction('stop', '{{ name }}')"
+                                       title="Stop the script">
+                                        <i class="bi-stop-fill me-2"></i>
+                                        Stop Script
+                                    </a>
+                                    <a href="/" class="btn btn-outline-secondary">
+                                        <i class="bi-list me-2"></i>
+                                        Back to List
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
+                    <!-- Console Output -->
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi-terminal me-2"></i>
+                                    Console Output (Live)
+                                </h5>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="clearOutput()" title="Clear output">
+                                        <i class="bi-trash"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleAutoScroll()" title="Toggle auto-scroll">
+                                        <i class="bi-arrow-down-circle" id="scroll-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="console-output" id="log">{{ runtime.output }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script>
-(function(){
-const logEl = document.getElementById('log');
-function append(text){
-logEl.textContent += text;
-logEl.scrollTop = logEl.scrollHeight;
-}
-const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
-const ws = new WebSocket(wsUrl);
-ws.onmessage = (ev) => {
-append(ev.data);
-};
-})();
-</script>
+    <!-- Enhanced JavaScript (no external dependencies) -->
+    <script>
+        let autoScroll = true;
+        
+        // Theme management (same as other templates)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const icon = document.getElementById('theme-icon');
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            if (newTheme === 'dark') {
+                icon.className = 'bi-sun-fill';
+            } else {
+                icon.className = 'bi-moon-fill';
+            }
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            
+            html.setAttribute('data-theme', savedTheme);
+            
+            if (savedTheme === 'dark') {
+                icon.className = 'bi-sun-fill';
+            } else {
+                icon.className = 'bi-moon-fill';
+            }
+        }
+
+        // Confirmation dialogs
+        function confirmAction(action, scriptName) {
+            const message = `Are you sure you want to ${action} the script "${scriptName}"?`;
+            return confirm(message);
+        }
+
+        // Console output management
+        function clearOutput() {
+            if (confirm('Are you sure you want to clear the console output?')) {
+                document.getElementById('log').textContent = '';
+            }
+        }
+
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            const icon = document.getElementById('scroll-icon');
+            if (autoScroll) {
+                icon.className = 'bi-arrow-down-circle-fill text-primary';
+                scrollToBottom();
+            } else {
+                icon.className = 'bi-arrow-down-circle';
+            }
+        }
+
+        function scrollToBottom() {
+            if (autoScroll) {
+                const logEl = document.getElementById('log');
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+        }
+
+        function appendToLog(text) {
+            const logEl = document.getElementById('log');
+            logEl.textContent += text;
+            scrollToBottom();
+        }
+
+        // WebSocket for live logs
+        function initWebSocket() {
+            const protocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
+            const wsUrl = protocol + location.host + '/ws/logs/{{ name }}';
+            
+            let ws;
+            let reconnectAttempts = 0;
+            const maxReconnectAttempts = 5;
+            
+            function connect() {
+                try {
+                    ws = new WebSocket(wsUrl);
+                    
+                    ws.onopen = function() {
+                        console.log('WebSocket connected for logs');
+                        reconnectAttempts = 0;
+                    };
+                    
+                    ws.onmessage = function(ev) {
+                        appendToLog(ev.data);
+                    };
+                    
+                    ws.onclose = function() {
+                        console.log('WebSocket disconnected');
+                        if (reconnectAttempts < maxReconnectAttempts) {
+                            reconnectAttempts++;
+                            setTimeout(connect, 2000 * reconnectAttempts);
+                        }
+                    };
+                    
+                    ws.onerror = function(error) {
+                        console.error('WebSocket error:', error);
+                    };
+                } catch(e) {
+                    console.error('Failed to connect WebSocket:', e);
+                }
+            }
+            
+            connect();
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            initWebSocket();
+            
+            // Set initial auto-scroll icon state
+            const icon = document.getElementById('scroll-icon');
+            icon.className = 'bi-arrow-down-circle-fill text-primary';
+        });
+    </script>
 </body>
 </html>

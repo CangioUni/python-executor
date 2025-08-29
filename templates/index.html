@@ -1,52 +1,256 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="light">
 <head>
-<title>Script Manager</title>
-<style>
-table { border-collapse: collapse; }
-td, th { border: 1px solid #ccc; padding: 6px 10px; }
-.status-running { color: green; font-weight: bold; }
-.status-error { color: #b00; font-weight: bold; }
-.status-stopped { color: #555; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Manager</title>
+    
+    <!-- Local CSS -->
+    <link href="/static/style.css" rel="stylesheet">
+    
+    <!-- Custom additional styles -->
+    <style>
+        /* Icons using text symbols since we can't load Bootstrap Icons */
+        .bi-code-square::before { content: "📋"; }
+        .bi-plus-circle::before { content: "➕"; }
+        .bi-list-ul::before { content: "📝"; }
+        .bi-file-earmark-code::before { content: "📄"; }
+        .bi-gear::before { content: "⚙️"; }
+        .bi-activity::before { content: "📊"; }
+        .bi-tools::before { content: "🔧"; }
+        .bi-play-fill::before { content: "▶️"; }
+        .bi-stop-fill::before { content: "⏹️"; }
+        .bi-inbox::before { content: "📥"; }
+        .bi-moon-fill::before { content: "🌙"; }
+        .bi-sun-fill::before { content: "☀️"; }
+        
+        .bi-code-square, .bi-plus-circle, .bi-list-ul, .bi-file-earmark-code,
+        .bi-gear, .bi-activity, .bi-tools, .bi-play-fill, .bi-stop-fill,
+        .bi-inbox, .bi-moon-fill, .bi-sun-fill {
+            font-style: normal;
+        }
+    </style>
 </head>
 <body>
-<h1>Scripts</h1>
-<a href="/add">Add New Script</a>
-<table>
-<tr><th>Name</th><th>Policy</th><th>Status</th><th>Actions</th></tr>
-{% for name, script in scripts.items() %}
-<tr data-name="{{ name }}">
-<td><a href="/script/{{ name }}">{{ name }}</a></td>
-<td>{{ script.policy }}</td>
-<td class="status" id="status-{{ name }}">{{ statuses[name] }}</td>
-<td>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a>
-</td>
-</tr>
-{% endfor %}
-</table>
+    <!-- Dark Mode Toggle -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <i class="bi bi-moon-fill" id="theme-icon"></i>
+    </div>
 
+    <!-- Main Container -->
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header Section -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="display-6 mb-0">
+                        <i class="bi bi-code-square me-2"></i>
+                        Script Manager
+                    </h1>
+                    <a href="/add" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add New Script
+                    </a>
+                </div>
 
-<script>
-(function(){
-function setStatus(name, status){
-const el = document.getElementById('status-' + name);
-if(!el) return;
-el.textContent = status;
-el.className = 'status status-' + status.replace(/\s+/g,'-');
-}
-const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/status');
-ws.onmessage = (ev) => {
-try {
-const data = JSON.parse(ev.data);
-Object.entries(data).forEach(([name, status])=> setStatus(name, status));
-} catch(e) { /* ignore */ }
-// send a ping to keep the loop going server-side
-ws.send('ping');
-};
-})();
-</script>
+                <!-- Scripts Table Card -->
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-list-ul me-2"></i>
+                            Managed Scripts
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if scripts %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <i class="bi bi-file-earmark-code me-1"></i>
+                                            Name
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-gear me-1"></i>
+                                            Policy
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-activity me-1"></i>
+                                            Status
+                                        </th>
+                                        <th scope="col">
+                                            <i class="bi bi-tools me-1"></i>
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for name, script in scripts.items() %}
+                                    <tr data-name="{{ name }}">
+                                        <td>
+                                            <a href="/script/{{ name }}" class="text-decoration-none fw-medium">
+                                                {{ name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ script.policy }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-{{ statuses[name].replace(' ', '-') }}" 
+                                                  id="status-{{ name }}">
+                                                {{ statuses[name] }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="/start/{{ name }}" 
+                                                   class="btn btn-success btn-action"
+                                                   onclick="return confirmAction('start', '{{ name }}')"
+                                                   title="Start script">
+                                                    <i class="bi-play-fill"></i>
+                                                    Start
+                                                </a>
+                                                <a href="/stop/{{ name }}" 
+                                                   class="btn btn-danger btn-action"
+                                                   onclick="return confirmAction('stop', '{{ name }}')"
+                                                   title="Stop script">
+                                                    <i class="bi-stop-fill"></i>
+                                                    Stop
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <h5 class="mt-3 text-muted">No scripts configured</h5>
+                            <p class="text-muted">Get started by adding your first script.</p>
+                            <a href="/add" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Add Your First Script
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced JavaScript (no external dependencies) -->
+    <script>
+        // Theme management
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const icon = document.getElementById('theme-icon');
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update icon
+            if (newTheme === 'dark') {
+                icon.className = 'bi-sun-fill';
+            } else {
+                icon.className = 'bi-moon-fill';
+            }
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            
+            html.setAttribute('data-theme', savedTheme);
+            
+            if (savedTheme === 'dark') {
+                icon.className = 'bi-sun-fill';
+            } else {
+                icon.className = 'bi-moon-fill';
+            }
+        }
+
+        // Confirmation dialogs for actions
+        function confirmAction(action, scriptName) {
+            const message = `Are you sure you want to ${action} the script "${scriptName}"?`;
+            return confirm(message);
+        }
+
+        // Enhanced status updates with animation
+        function setStatus(name, status) {
+            const el = document.getElementById('status-' + name);
+            if (!el) return;
+            
+            // Add update animation
+            el.classList.add('status-update');
+            setTimeout(() => el.classList.remove('status-update'), 500);
+            
+            // Update text and class
+            el.textContent = status;
+            el.className = 'status-badge status-' + status.replace(/\s+/g, '-');
+        }
+
+        // WebSocket connection with enhanced error handling
+        function initWebSocket() {
+            const protocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
+            const wsUrl = protocol + location.host + '/ws/status';
+            
+            let ws;
+            let reconnectAttempts = 0;
+            const maxReconnectAttempts = 5;
+            
+            function connect() {
+                try {
+                    ws = new WebSocket(wsUrl);
+                    
+                    ws.onopen = function() {
+                        console.log('WebSocket connected');
+                        reconnectAttempts = 0;
+                    };
+                    
+                    ws.onmessage = function(ev) {
+                        try {
+                            const data = JSON.parse(ev.data);
+                            Object.entries(data).forEach(([name, status]) => setStatus(name, status));
+                            // Send ping to keep connection alive
+                            ws.send('ping');
+                        } catch(e) {
+                            console.warn('Failed to parse WebSocket message:', e);
+                        }
+                    };
+                    
+                    ws.onclose = function() {
+                        console.log('WebSocket disconnected');
+                        // Attempt to reconnect
+                        if (reconnectAttempts < maxReconnectAttempts) {
+                            reconnectAttempts++;
+                            setTimeout(connect, 2000 * reconnectAttempts);
+                        }
+                    };
+                    
+                    ws.onerror = function(error) {
+                        console.error('WebSocket error:', error);
+                    };
+                } catch(e) {
+                    console.error('Failed to connect WebSocket:', e);
+                }
+            }
+            
+            connect();
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            initWebSocket();
+        });
+    </script>
 </body>
 </html>

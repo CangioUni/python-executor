@@ -1,22 +1,248 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="light">
 <head>
-<title>Add Script</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Script - Script Manager</title>
+    
+    <!-- Local CSS -->
+    <link href="/static/style.css" rel="stylesheet">
+    
+    <!-- Icon styles -->
+    <style>
+        .bi-arrow-left::before { content: "←"; }
+        .bi-plus-circle::before { content: "➕"; }
+        .bi-gear::before { content: "⚙️"; }
+        .bi-file-earmark-code::before { content: "📄"; }
+        .bi-terminal::before { content: "💻"; }
+        .bi-arrow-repeat::before { content: "🔄"; }
+        .bi-x-circle::before { content: "❌"; }
+        .bi-info-circle::before { content: "ℹ️"; }
+        .bi-moon-fill::before { content: "🌙"; }
+        .bi-sun-fill::before { content: "☀️"; }
+        
+        .bi-arrow-left, .bi-plus-circle, .bi-gear, .bi-file-earmark-code,
+        .bi-terminal, .bi-arrow-repeat, .bi-x-circle, .bi-info-circle,
+        .bi-moon-fill, .bi-sun-fill {
+            font-style: normal;
+        }
+    </style>
 </head>
 <body>
-<h1>Add New Script</h1>
-<form method="post">
-<label>Script Path: <input type="text" name="path" required style="width:400px"></label><br><br>
-<label>Arguments: <input type="text" name="args" placeholder="e.g. --foo 123"></label><br><br>
-<label>Restart Policy:
-<select name="policy">
-<option value="never">never</option>
-<option value="on-failure" selected>on-failure</option>
-<option value="always">always</option>
-</select>
-</label><br><br>
-<button type="submit">Add</button>
-</form>
-<p><a href="/">Back to list</a></p>
+    <!-- Dark Mode Toggle -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <i class="bi bi-moon-fill" id="theme-icon"></i>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6">
+                <!-- Header -->
+                <div class="d-flex align-items-center mb-4">
+                    <a href="/" class="btn btn-outline-secondary me-3" title="Back to Scripts">
+                        <i class="bi-arrow-left"></i>
+                    </a>
+                    <h1 class="display-6 mb-0">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add New Script
+                    </h1>
+                </div>
+
+                <!-- Add Script Form Card -->
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-gear me-2"></i>
+                            Script Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="addScriptForm" novalidate>
+                            <!-- Script Path Field -->
+                            <div class="form-floating mb-3">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="path" 
+                                       name="path" 
+                                       placeholder="Enter script path"
+                                       required>
+                                <label for="path">
+                                    <i class="bi-file-earmark-code me-1"></i>
+                                    Script Path
+                                </label>
+                                <div class="invalid-feedback">
+                                    Please provide a valid script path.
+                                </div>
+                                <div class="form-text">
+                                    Full path to the Python script (e.g., /path/to/script.py)
+                                </div>
+                            </div>
+
+                            <!-- Arguments Field -->
+                            <div class="form-floating mb-3">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="args" 
+                                       name="args" 
+                                       placeholder="Enter script arguments">
+                                <label for="args">
+                                    <i class="bi-terminal me-1"></i>
+                                    Arguments (Optional)
+                                </label>
+                                <div class="form-text">
+                                    Command line arguments for the script (e.g., --foo 123 --bar value)
+                                </div>
+                            </div>
+
+                            <!-- Restart Policy Field -->
+                            <div class="form-floating mb-4">
+                                <select class="form-select" id="policy" name="policy" required>
+                                    <option value="never">Never - Don't restart on exit</option>
+                                    <option value="on-failure" selected>On Failure - Restart only on error</option>
+                                    <option value="always">Always - Always restart after exit</option>
+                                </select>
+                                <label for="policy">
+                                    <i class="bi-arrow-repeat me-1"></i>
+                                    Restart Policy
+                                </label>
+                                <div class="form-text">
+                                    Choose when the script should be automatically restarted
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/" class="btn btn-outline-secondary">
+                                    <i class="bi-x-circle me-2"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi-plus-circle me-2"></i>
+                                    Add Script
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Help Section -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="bi-info-circle me-2"></i>
+                            Quick Help
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Restart Policies:</h6>
+                                <ul class="list-unstyled small">
+                                    <li><strong>Never:</strong> Script runs once, no restart</li>
+                                    <li><strong>On Failure:</strong> Restart only if script exits with error</li>
+                                    <li><strong>Always:</strong> Restart regardless of exit status</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Example Arguments:</h6>
+                                <ul class="list-unstyled small">
+                                    <li><code>--input data.txt</code></li>
+                                    <li><code>--verbose --port 8080</code></li>
+                                    <li><code>arg1 arg2 --flag</code></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Enhanced JavaScript (no external dependencies) -->
+    <script>
+        // Theme management (same as index.html)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const icon = document.getElementById('theme-icon');
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            if (newTheme === 'dark') {
+                icon.className = 'bi-sun-fill';
+            } else {
+                icon.className = 'bi-moon-fill';
+            }
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            
+            html.setAttribute('data-theme', savedTheme);
+            
+            if (savedTheme === 'dark') {
+                icon.className = 'bi-sun-fill';
+            } else {
+                icon.className = 'bi-moon-fill';
+            }
+        }
+
+        // Form validation
+        function validateForm() {
+            const form = document.getElementById('addScriptForm');
+            const pathInput = document.getElementById('path');
+            
+            form.addEventListener('submit', function(event) {
+                let isValid = true;
+                
+                // Reset validation state
+                pathInput.classList.remove('is-invalid', 'is-valid');
+                
+                // Validate script path
+                const pathValue = pathInput.value.trim();
+                if (!pathValue) {
+                    pathInput.classList.add('is-invalid');
+                    isValid = false;
+                } else if (!pathValue.endsWith('.py')) {
+                    pathInput.classList.add('is-invalid');
+                    pathInput.nextElementSibling.nextElementSibling.textContent = 'Script path must end with .py';
+                    isValid = false;
+                } else {
+                    pathInput.classList.add('is-valid');
+                }
+                
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            });
+
+            // Real-time validation
+            pathInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                this.classList.remove('is-invalid', 'is-valid');
+                
+                if (value && !value.endsWith('.py')) {
+                    this.classList.add('is-invalid');
+                    this.nextElementSibling.nextElementSibling.textContent = 'Script path must end with .py';
+                } else if (value) {
+                    this.classList.add('is-valid');
+                    this.nextElementSibling.nextElementSibling.textContent = 'Full path to the Python script (e.g., /path/to/script.py)';
+                }
+            });
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            validateForm();
+        });
+    </script>
 </body>
 </html>
