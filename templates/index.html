@@ -1,32 +1,286 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-bs-theme="light">
 <head>
-<title>Script Manager</title>
-<style>
-table { border-collapse: collapse; }
-td, th { border: 1px solid #ccc; padding: 6px 10px; }
-.status-running { color: green; font-weight: bold; }
-.status-error { color: #b00; font-weight: bold; }
-.status-stopped { color: #555; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Manager</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .status-running { 
+            color: var(--bs-success) !important; 
+        }
+        .status-error { 
+            color: var(--bs-danger) !important; 
+        }
+        .status-stopped { 
+            color: var(--bs-secondary) !important; 
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .table-hover tbody tr:hover {
+            background-color: var(--bs-secondary-bg);
+        }
+        [data-bs-theme="dark"] .table-hover tbody tr:hover {
+            background-color: var(--bs-dark-bg-subtle);
+        }
+    </style>
 </head>
 <body>
-<h1>Scripts</h1>
-<a href="/add">Add New Script</a>
-<table>
-<tr><th>Name</th><th>Policy</th><th>Status</th><th>Actions</th></tr>
-{% for name, script in scripts.items() %}
-<tr data-name="{{ name }}">
-<td><a href="/script/{{ name }}">{{ name }}</a></td>
-<td>{{ script.policy }}</td>
-<td class="status" id="status-{{ name }}">{{ statuses[name] }}</td>
-<td>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a>
-</td>
-</tr>
-{% endfor %}
-</table>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-gear-fill me-2"></i>Script Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">
+                            <i class="bi bi-house-fill me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/add">
+                            <i class="bi bi-plus-circle-fill me-1"></i>Add New Script
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <button class="btn btn-outline-light btn-sm" id="theme-toggle">
+                        <i class="bi bi-moon-fill" id="theme-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header Card -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h1 class="card-title mb-0">
+                            <i class="bi bi-list-ul me-2"></i>Scripts
+                        </h1>
+                        <a href="/add" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Add New Script
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if scripts %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="bi bi-file-earmark-code me-1"></i>Name</th>
+                                        <th><i class="bi bi-shield-check me-1"></i>Policy</th>
+                                        <th><i class="bi bi-activity me-1"></i>Status</th>
+                                        <th><i class="bi bi-tools me-1"></i>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for name, script in scripts.items() %}
+                                    <tr data-name="{{ name }}">
+                                        <td>
+                                            <a href="/script/{{ name }}" class="text-decoration-none fw-medium">
+                                                <i class="bi bi-file-earmark-code me-2"></i>{{ name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ script.policy }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge status" id="status-{{ name }}" data-status="{{ statuses[name] }}">
+                                                {{ statuses[name] }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="/start/{{ name }}" class="btn btn-success btn-sm" title="Start Script">
+                                                    <i class="bi bi-play-fill"></i>
+                                                </a>
+                                                <a href="/stop/{{ name }}" class="btn btn-danger btn-sm" title="Stop Script">
+                                                    <i class="bi bi-stop-fill"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+                            <h4 class="text-muted mt-3">No scripts found</h4>
+                            <p class="text-muted">Get started by adding your first script.</p>
+                            <a href="/add" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Add Your First Script
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center text-muted py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <p class="mb-1">&copy; 2024 Script Manager. Built with FastAPI and Bootstrap.</p>
+                    <p class="mb-0">
+                        <a href="/" class="text-decoration-none me-3">Home</a>
+                        <a href="/add" class="text-decoration-none">Add Script</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notification-toast" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const htmlElement = document.documentElement;
+        
+        // Load saved theme or default to light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-bs-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            htmlElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            showNotification(`Switched to ${newTheme} mode`, 'success');
+        });
+        
+        function updateThemeIcon(theme) {
+            themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        }
+        
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const toastEl = document.getElementById('notification-toast');
+            const toastBody = toastEl.querySelector('.toast-body');
+            const toastHeader = toastEl.querySelector('.toast-header');
+            
+            // Update icon based on type
+            const icon = toastHeader.querySelector('i');
+            icon.className = type === 'success' ? 'bi bi-check-circle-fill me-2' : 
+                           type === 'error' ? 'bi bi-exclamation-circle-fill me-2' : 
+                           'bi bi-info-circle-fill me-2';
+            
+            toastBody.textContent = message;
+            
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+        
+        // Status update functionality
+        function setStatus(name, status) {
+            const el = document.getElementById('status-' + name);
+            if (!el) return;
+            
+            el.textContent = status;
+            el.className = 'badge status';
+            
+            // Set badge color based on status
+            if (status === 'running') {
+                el.classList.add('bg-success');
+            } else if (status === 'error') {
+                el.classList.add('bg-danger');
+            } else {
+                el.classList.add('bg-secondary');
+            }
+            
+            el.setAttribute('data-status', status);
+        }
+        
+        // WebSocket connection for real-time status updates
+        function connectWebSocket() {
+            const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/status');
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+            };
+            
+            ws.onmessage = (ev) => {
+                try {
+                    const data = JSON.parse(ev.data);
+                    Object.entries(data).forEach(([name, status]) => setStatus(name, status));
+                } catch(e) { 
+                    console.error('Error parsing WebSocket message:', e);
+                }
+                // Send a ping to keep the loop going server-side
+                ws.send('ping');
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket disconnected, attempting to reconnect...');
+                setTimeout(connectWebSocket, 3000); // Reconnect after 3 seconds
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        // Initialize WebSocket connection
+        connectWebSocket();
+        
+        // Handle start/stop button clicks with notifications
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('a[href*="/start/"]')) {
+                const scriptName = e.target.closest('a').href.split('/start/')[1];
+                setTimeout(() => showNotification(`Starting script: ${scriptName}`, 'info'), 100);
+            } else if (e.target.closest('a[href*="/stop/"]')) {
+                const scriptName = e.target.closest('a').href.split('/stop/')[1];
+                setTimeout(() => showNotification(`Stopping script: ${scriptName}`, 'info'), 100);
+            }
+        });
+        
+        // Initialize status badges on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.status').forEach(el => {
+                const status = el.getAttribute('data-status');
+                setStatus(el.id.replace('status-', ''), status);
+            });
+        });
+    </script>
+</body>
+</html>
 
 
 <script>

@@ -1,22 +1,208 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-bs-theme="light">
 <head>
-<title>Add Script</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Script - Script Manager</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-<h1>Add New Script</h1>
-<form method="post">
-<label>Script Path: <input type="text" name="path" required style="width:400px"></label><br><br>
-<label>Arguments: <input type="text" name="args" placeholder="e.g. --foo 123"></label><br><br>
-<label>Restart Policy:
-<select name="policy">
-<option value="never">never</option>
-<option value="on-failure" selected>on-failure</option>
-<option value="always">always</option>
-</select>
-</label><br><br>
-<button type="submit">Add</button>
-</form>
-<p><a href="/">Back to list</a></p>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-gear-fill me-2"></i>Script Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house-fill me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/add">
+                            <i class="bi bi-plus-circle-fill me-1"></i>Add New Script
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <button class="btn btn-outline-light btn-sm" id="theme-toggle">
+                        <i class="bi bi-moon-fill" id="theme-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <!-- Add Script Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="card-title mb-0">
+                            <i class="bi bi-plus-circle me-2"></i>Add New Script
+                        </h1>
+                        <p class="text-muted mb-0 mt-2">Configure a new script to be managed by the system</p>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="add-script-form">
+                            <div class="mb-3">
+                                <label for="path" class="form-label">
+                                    <i class="bi bi-file-earmark-code me-1"></i>Script Path
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="path" 
+                                       name="path" 
+                                       required 
+                                       placeholder="/path/to/your/script">
+                                <div class="form-text">
+                                    Enter the full path to your script file (e.g., /usr/bin/python3, /bin/bash)
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="args" class="form-label">
+                                    <i class="bi bi-terminal me-1"></i>Arguments
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="args" 
+                                       name="args" 
+                                       placeholder="--flag value arg1 arg2">
+                                <div class="form-text">
+                                    Optional command line arguments for your script
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="policy" class="form-label">
+                                    <i class="bi bi-shield-check me-1"></i>Restart Policy
+                                </label>
+                                <select class="form-select" id="policy" name="policy">
+                                    <option value="never">Never restart</option>
+                                    <option value="on-failure" selected>Restart on failure only</option>
+                                    <option value="always">Always restart</option>
+                                </select>
+                                <div class="form-text">
+                                    Choose when the script should be automatically restarted
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/" class="btn btn-secondary me-md-2">
+                                    <i class="bi bi-arrow-left me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Script
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center text-muted py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <p class="mb-1">&copy; 2024 Script Manager. Built with FastAPI and Bootstrap.</p>
+                    <p class="mb-0">
+                        <a href="/" class="text-decoration-none me-3">Home</a>
+                        <a href="/add" class="text-decoration-none">Add Script</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notification-toast" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const htmlElement = document.documentElement;
+        
+        // Load saved theme or default to light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-bs-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            htmlElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            showNotification(`Switched to ${newTheme} mode`, 'success');
+        });
+        
+        function updateThemeIcon(theme) {
+            themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        }
+        
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const toastEl = document.getElementById('notification-toast');
+            const toastBody = toastEl.querySelector('.toast-body');
+            const toastHeader = toastEl.querySelector('.toast-header');
+            
+            // Update icon based on type
+            const icon = toastHeader.querySelector('i');
+            icon.className = type === 'success' ? 'bi bi-check-circle-fill me-2' : 
+                           type === 'error' ? 'bi bi-exclamation-circle-fill me-2' : 
+                           'bi bi-info-circle-fill me-2';
+            
+            toastBody.textContent = message;
+            
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+        
+        // Form validation and submission
+        document.getElementById('add-script-form').addEventListener('submit', (e) => {
+            const path = document.getElementById('path').value.trim();
+            if (!path) {
+                e.preventDefault();
+                showNotification('Please enter a script path', 'error');
+                return;
+            }
+            
+            showNotification('Adding script...', 'info');
+        });
+    </script>
 </body>
 </html>

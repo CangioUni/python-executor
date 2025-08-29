@@ -1,31 +1,399 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-bs-theme="light">
 <head>
-<title>Script Details</title>
-<style>
-pre { background:#eee; padding:10px; max-height:400px; overflow:auto; }
-.meta { color:#555; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ name }} Details - Script Manager</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-dark.min.css" rel="stylesheet" media="(prefers-color-scheme: dark)">
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .console-output {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 0.375rem;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+        .status-running { 
+            color: var(--bs-success) !important; 
+        }
+        .status-error { 
+            color: var(--bs-danger) !important; 
+        }
+        .status-stopped { 
+            color: var(--bs-secondary) !important; 
+        }
+        [data-bs-theme="dark"] .console-output {
+            background-color: var(--bs-dark);
+            color: var(--bs-light);
+        }
+        .meta-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stats-card {
+            border-left: 4px solid var(--bs-primary);
+        }
+    </style>
 </head>
 <body>
-<h1>Details for {{ name }}</h1>
-<p class="meta"><b>Path:</b> {{ script.path }}</p>
-<p class="meta"><b>Arguments:</b> {{ script.args }}</p>
-<p class="meta"><b>Restart Policy:</b> {{ script.policy }}</p>
-<p><b>Status:</b> <span id="status">{{ runtime.status }}</span></p>
-<p><b>Running Time:</b> <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s</p>
-<p><b>Last Return Code:</b> <span id="returncode">{{ runtime.returncode }}</span></p>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-gear-fill me-2"></i>Script Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house-fill me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/add">
+                            <i class="bi bi-plus-circle-fill me-1"></i>Add New Script
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <button class="btn btn-outline-light btn-sm" id="theme-toggle">
+                        <i class="bi bi-moon-fill" id="theme-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Script Info Card -->
+                <div class="card meta-card mb-4">
+                    <div class="card-body">
+                        <h1 class="card-title">
+                            <i class="bi bi-file-earmark-code me-2"></i>{{ name }}
+                        </h1>
+                        <p class="mb-0">Script details and real-time monitoring</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<h2>Console Output (live)</h2>
-<pre id="log">{{ runtime.output }}</pre>
+        <div class="row">
+            <!-- Script Configuration -->
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-gear me-2"></i>Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-folder me-1"></i>Path
+                            </label>
+                            <p class="form-control-plaintext bg-light p-2 rounded">{{ script.path }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-terminal me-1"></i>Arguments
+                            </label>
+                            <p class="form-control-plaintext bg-light p-2 rounded">
+                                {% if script.args %}{{ script.args }}{% else %}<em class="text-muted">No arguments</em>{% endif %}
+                            </p>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-shield-check me-1"></i>Restart Policy
+                            </label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-info">{{ script.policy }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Runtime Statistics -->
+            <div class="col-lg-6">
+                <div class="card stats-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-activity me-2"></i>Runtime Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Status</h6>
+                                    <span class="badge fs-6" id="status-badge" data-status="{{ runtime.status }}">
+                                        {{ runtime.status }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Running Time</h6>
+                                    <span class="h5" id="running-time">
+                                        {% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}s
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <h6 class="text-muted">Last Return Code</h6>
+                            <span class="h5" id="returncode">
+                                {% if runtime.returncode is not none %}{{ runtime.returncode }}{% else %}<em class="text-muted">None</em>{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<p>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a> |
-<a href="/">Back to list</a>
-</p>
+        <!-- Console Output -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-terminal me-2"></i>Console Output (Live)
+                        </h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" id="clear-console" title="Clear Console">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="toggle-console" title="Toggle Console">
+                                <i class="bi bi-chevron-up" id="console-toggle-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0" id="console-container">
+                        <pre class="console-output m-0 p-3" id="log">{{ runtime.output }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="btn-group me-3" role="group">
+                            <a href="/start/{{ name }}" class="btn btn-success" id="start-btn">
+                                <i class="bi bi-play-fill me-2"></i>Start Script
+                            </a>
+                            <a href="/stop/{{ name }}" class="btn btn-danger" id="stop-btn">
+                                <i class="bi bi-stop-fill me-2"></i>Stop Script
+                            </a>
+                        </div>
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center text-muted py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <p class="mb-1">&copy; 2024 Script Manager. Built with FastAPI and Bootstrap.</p>
+                    <p class="mb-0">
+                        <a href="/" class="text-decoration-none me-3">Home</a>
+                        <a href="/add" class="text-decoration-none">Add Script</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notification-toast" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Prism.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const htmlElement = document.documentElement;
+        
+        // Load saved theme or default to light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-bs-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            htmlElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            showNotification(`Switched to ${newTheme} mode`, 'success');
+        });
+        
+        function updateThemeIcon(theme) {
+            themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        }
+        
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const toastEl = document.getElementById('notification-toast');
+            const toastBody = toastEl.querySelector('.toast-body');
+            const toastHeader = toastEl.querySelector('.toast-header');
+            
+            // Update icon based on type
+            const icon = toastHeader.querySelector('i');
+            icon.className = type === 'success' ? 'bi bi-check-circle-fill me-2' : 
+                           type === 'error' ? 'bi bi-exclamation-circle-fill me-2' : 
+                           'bi bi-info-circle-fill me-2';
+            
+            toastBody.textContent = message;
+            
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+        
+        // Console functionality
+        const logEl = document.getElementById('log');
+        const consoleContainer = document.getElementById('console-container');
+        const toggleBtn = document.getElementById('toggle-console');
+        const toggleIcon = document.getElementById('console-toggle-icon');
+        const clearBtn = document.getElementById('clear-console');
+        
+        // Console toggle functionality
+        let consoleCollapsed = false;
+        toggleBtn.addEventListener('click', () => {
+            consoleCollapsed = !consoleCollapsed;
+            if (consoleCollapsed) {
+                consoleContainer.style.display = 'none';
+                toggleIcon.className = 'bi bi-chevron-down';
+            } else {
+                consoleContainer.style.display = 'block';
+                toggleIcon.className = 'bi bi-chevron-up';
+            }
+        });
+        
+        // Clear console functionality
+        clearBtn.addEventListener('click', () => {
+            logEl.textContent = '';
+            showNotification('Console cleared', 'info');
+        });
+        
+        // Status badge update
+        function updateStatusBadge(status) {
+            const badge = document.getElementById('status-badge');
+            badge.textContent = status;
+            badge.className = 'badge fs-6';
+            
+            if (status === 'running') {
+                badge.classList.add('bg-success');
+            } else if (status === 'error') {
+                badge.classList.add('bg-danger');
+            } else {
+                badge.classList.add('bg-secondary');
+            }
+        }
+        
+        // Initialize status badge
+        const initialStatus = document.getElementById('status-badge').getAttribute('data-status');
+        updateStatusBadge(initialStatus);
+        
+        // WebSocket for live logs
+        function append(text) {
+            logEl.textContent += text;
+            logEl.scrollTop = logEl.scrollHeight;
+            
+            // Apply syntax highlighting if the content looks like code
+            if (text.includes('Error') || text.includes('Exception') || text.includes('Traceback')) {
+                // Add error highlighting class
+                const lines = logEl.textContent.split('\n');
+                const lastLines = lines.slice(-10); // Check last 10 lines
+                if (lastLines.some(line => line.includes('Error') || line.includes('Exception'))) {
+                    logEl.classList.add('text-danger');
+                }
+            }
+        }
+        
+        // WebSocket connection for logs
+        function connectLogsWebSocket() {
+            const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
+            const ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                console.log('Logs WebSocket connected');
+            };
+            
+            ws.onmessage = (ev) => {
+                append(ev.data);
+            };
+            
+            ws.onclose = () => {
+                console.log('Logs WebSocket disconnected, attempting to reconnect...');
+                setTimeout(connectLogsWebSocket, 3000);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('Logs WebSocket error:', error);
+            };
+        }
+        
+        // Initialize WebSocket connection
+        connectLogsWebSocket();
+        
+        // Handle start/stop button clicks
+        document.getElementById('start-btn').addEventListener('click', (e) => {
+            showNotification('Starting script: {{ name }}', 'info');
+        });
+        
+        document.getElementById('stop-btn').addEventListener('click', (e) => {
+            showNotification('Stopping script: {{ name }}', 'info');
+        });
+        
+        // Auto-scroll to bottom of console on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            logEl.scrollTop = logEl.scrollHeight;
+        });
+    </script>
+</body>
+</html>
 
 
 <script>

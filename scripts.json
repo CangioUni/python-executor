@@ -1,0 +1,10 @@
+{
+  "echo": {
+    "path": "/bin/echo",
+    "args": [
+      "/bin/echoHello",
+      "World"
+    ],
+    "policy": "on-failure"
+  }
+}
