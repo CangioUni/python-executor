@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Script Manager{% endblock %}</title>
+    
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --primary-dark: #0b5ed7;
+            --success: #198754;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #0dcaf0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --secondary: #6c757d;
+            --background: #ffffff;
+            --surface: #f8f9fa;
+            --text: #212529;
+            --text-muted: #6c757d;
+            --border: #dee2e6;
+            --transition: 0.3s;
+        }
+        
+        [data-theme="dark"] {
+            --primary: #0d6efd;
+            --primary-dark: #0b5ed7;
+            --success: #198754;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #0dcaf0;
+            --light: #495057;
+            --dark: #adb5bd;
+            --secondary: #6c757d;
+            --background: #212529;
+            --surface: #343a40;
+            --text: #ffffff;
+            --text-muted: #adb5bd;
+            --border: #495057;
+        }
+        
+        * {
+            box-sizing: border-box;
+            transition: color var(--transition), background-color var(--transition), border-color var(--transition);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color var(--transition);
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            width: 100%;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 2rem 0;
+        }
+        
+        .card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        .card-header {
+            background-color: var(--light);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .card-footer {
+            background-color: var(--light);
+            border-top: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+        }
+        
+        .card-title {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-outline-secondary {
+            background-color: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .btn-group {
+            display: inline-flex;
+        }
+        
+        .btn-group .btn {
+            border-radius: 0;
+        }
+        
+        .btn-group .btn:first-child {
+            border-radius: 0.375rem 0 0 0.375rem;
+        }
+        
+        .btn-group .btn:last-child {
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+        
+        .table thead th {
+            background-color: var(--dark);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .table-striped tbody tr:nth-child(odd) {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.075);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+        
+        .bg-primary { background-color: var(--primary) !important; color: white; }
+        .bg-success { background-color: var(--success) !important; color: white; }
+        .bg-danger { background-color: var(--danger) !important; color: white; }
+        .bg-warning { background-color: var(--warning) !important; color: black; }
+        .bg-secondary { background-color: var(--secondary) !important; color: white; }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background-color: var(--background);
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-text {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+        
+        .mb-3 { margin-bottom: 1rem; }
+        .mb-4 { margin-bottom: 1.5rem; }
+        .me-2 { margin-right: 0.5rem; }
+        .ms-2 { margin-left: 0.5rem; }
+        .mt-4 { margin-top: 1.5rem; }
+        .py-5 { padding-top: 3rem; padding-bottom: 3rem; }
+        .text-center { text-align: center; }
+        .text-muted { color: var(--text-muted); }
+        .text-primary { color: var(--primary); }
+        .text-danger { color: var(--danger); }
+        .fw-bold { font-weight: 600; }
+        .display-6 { font-size: 2.5rem; font-weight: 600; }
+        
+        .console-output {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            padding: 1rem;
+            white-space: pre-wrap;
+        }
+        
+        .footer {
+            background-color: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 2rem 0;
+            margin-top: auto;
+        }
+        
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -0.5rem;
+        }
+        
+        .col-12 { width: 100%; padding: 0 0.5rem; }
+        .col-md-6 { width: 100%; padding: 0 0.5rem; }
+        .col-lg-4 { width: 100%; padding: 0 0.5rem; }
+        .col-lg-6 { width: 100%; padding: 0 0.5rem; }
+        .col-lg-8 { width: 100%; padding: 0 0.5rem; }
+        
+        @media (min-width: 768px) {
+            .col-md-6 { width: 50%; }
+        }
+        
+        @media (min-width: 992px) {
+            .col-lg-4 { width: 33.333333%; }
+            .col-lg-6 { width: 50%; }
+            .col-lg-8 { width: 66.666667%; }
+        }
+        
+        .d-flex { display: flex; }
+        .justify-content-between { justify-content: space-between; }
+        .justify-content-center { justify-content: center; }
+        .align-items-center { align-items: center; }
+        .flex-wrap { flex-wrap: wrap; }
+        
+        .toast-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+        
+        .toast {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            min-width: 300px;
+        }
+        
+        .toast-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .toast-body {
+            color: var(--text);
+        }
+        
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        
+        .d-none { display: none; }
+        
+        #darkModeToggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+        
+        #darkModeToggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Dark theme specific adjustments */
+        [data-theme="dark"] .table-striped tbody tr:nth-child(odd) {
+            background-color: rgba(255, 255, 255, 0.025);
+        }
+        
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.075);
+        }
+        
+        [data-theme="dark"] .console-output {
+            background-color: #1a1a1a;
+            color: #e9ecef;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                ▶ Script Manager
+            </a>
+            
+            <ul class="navbar-nav">
+                <li><a class="nav-link" href="/">🏠 Home</a></li>
+                <li><a class="nav-link" href="/add">➕ Add Script</a></li>
+                <li>
+                    <button id="darkModeToggle" type="button">
+                        <span id="darkModeIcon">🌙</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2024 Script Manager. All rights reserved.</p>
+                </div>
+                <div class="col-md-6" style="text-align: right;">
+                    <p><small style="color: var(--text-muted);">Built with FastAPI</small></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Dark Mode Toggle Script -->
+    <script>
+        (function() {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const darkModeIcon = document.getElementById('darkModeIcon');
+            const html = document.documentElement;
+            
+            // Get saved theme or default to light
+            let currentTheme = localStorage.getItem('theme') || 'light';
+            
+            function setTheme(theme) {
+                html.setAttribute('data-theme', theme);
+                currentTheme = theme;
+                localStorage.setItem('theme', theme);
+                
+                if (theme === 'dark') {
+                    darkModeIcon.textContent = '☀️';
+                } else {
+                    darkModeIcon.textContent = '🌙';
+                }
+            }
+            
+            // Set initial theme
+            setTheme(currentTheme);
+            
+            // Toggle theme on button click
+            darkModeToggle.addEventListener('click', function() {
+                setTheme(currentTheme === 'light' ? 'dark' : 'light');
+            });
+        })();
+        
+        // Toast utility function
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'danger' || type === 'error') icon = '❌';
+            if (type === 'warning') icon = '⚠️';
+            
+            const toastHTML = `
+                <div class="toast" id="${toastId}">
+                    <div class="toast-header">
+                        <span>${icon} Script Manager</span>
+                        <button type="button" class="btn-close" onclick="closeToast('${toastId}')">&times;</button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                closeToast(toastId);
+            }, 5000);
+        }
+        
+        function closeToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.remove();
+            }
+        }
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

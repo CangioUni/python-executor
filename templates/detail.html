@@ -1,46 +1,248 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Script Details</title>
-<style>
-pre { background:#eee; padding:10px; max-height:400px; overflow:auto; }
-.meta { color:#555; }
-</style>
-</head>
-<body>
-<h1>Details for {{ name }}</h1>
-<p class="meta"><b>Path:</b> {{ script.path }}</p>
-<p class="meta"><b>Arguments:</b> {{ script.args }}</p>
-<p class="meta"><b>Restart Policy:</b> {{ script.policy }}</p>
-<p><b>Status:</b> <span id="status">{{ runtime.status }}</span></p>
-<p><b>Running Time:</b> <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s</p>
-<p><b>Last Return Code:</b> <span id="returncode">{{ runtime.returncode }}</span></p>
+{% extends "base.html" %}
 
+{% block title %}{{ name }} - Script Details{% endblock %}
 
-<h2>Console Output (live)</h2>
-<pre id="log">{{ runtime.output }}</pre>
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-6">
+                🐍 {{ name }}
+            </h1>
+            <div class="btn-group">
+                <a href="/start/{{ name }}" class="btn btn-success" title="Start Script">
+                    ▶️ Start
+                </a>
+                <a href="/stop/{{ name }}" class="btn btn-danger" title="Stop Script">
+                    ⏹️ Stop
+                </a>
+                <a href="/" class="btn btn-outline-secondary" title="Back to Dashboard">
+                    ← Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
+<div class="row">
+    <!-- Script Information Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    ℹ️ Script Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <p><strong>📄 Path:</strong><br>
+                   <code style="word-break: break-all;">{{ script.path }}</code></p>
+                
+                <p><strong>💻 Arguments:</strong><br>
+                   {% if script.args %}
+                       <code>{{ script.args|join(' ') }}</code>
+                   {% else %}
+                       <span class="text-muted">None</span>
+                   {% endif %}</p>
+                
+                <p><strong>🔄 Policy:</strong><br>
+                   <span class="badge bg-secondary">{{ script.policy }}</span></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Runtime Status Card -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    📊 Runtime Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <p><strong>Status:</strong><br>
+                           <span class="badge status-badge" id="status" data-status="{{ runtime.status }}">
+                               {{ runtime.status }}
+                           </span></p>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <p><strong>⏱️ Running Time:</strong><br>
+                           <span id="running-time" class="text-muted">
+                               {% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}s
+                           </span></p>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <p><strong>↩️ Exit Code:</strong><br>
+                           <span id="returncode" class="text-muted">
+                               {% if runtime.returncode is not none %}{{ runtime.returncode }}{% else %}N/A{% endif %}
+                           </span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<p>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a> |
-<a href="/">Back to list</a>
-</p>
+<!-- Console Output Card -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title">
+                    💻 Console Output
+                    <span class="badge bg-success ms-2" id="liveIndicator">
+                        📡 Live
+                    </span>
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="clearConsole()" title="Clear Console">
+                        🗑️
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="scrollToBottom()" title="Scroll to Bottom">
+                        ⬇️
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleAutoScroll()" id="autoScrollBtn" title="Toggle Auto-scroll">
+                        📜
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="console-output" id="log">{{ runtime.output }}</div>
+            </div>
+            <div class="card-footer">
+                <small class="text-muted">
+                    ℹ️ Output updates in real-time. Auto-scroll is enabled by default.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-
+{% block extra_scripts %}
 <script>
 (function(){
-const logEl = document.getElementById('log');
-function append(text){
-logEl.textContent += text;
-logEl.scrollTop = logEl.scrollHeight;
-}
-const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
-const ws = new WebSocket(wsUrl);
-ws.onmessage = (ev) => {
-append(ev.data);
-};
+    const logEl = document.getElementById('log');
+    const liveIndicator = document.getElementById('liveIndicator');
+    const autoScrollBtn = document.getElementById('autoScrollBtn');
+    let autoScroll = true;
+    let wsConnected = false;
+    
+    // Status badge styling function
+    function updateStatusBadge(element, status) {
+        element.textContent = status;
+        element.setAttribute('data-status', status);
+        
+        // Remove all existing status classes
+        element.className = 'badge status-badge';
+        
+        // Add appropriate class based on status
+        switch(status.toLowerCase()) {
+            case 'running':
+                element.classList.add('bg-success');
+                break;
+            case 'stopped':
+                element.classList.add('bg-secondary');
+                break;
+            case 'error':
+                element.classList.add('bg-danger');
+                break;
+            case 'starting':
+                element.classList.add('bg-warning');
+                break;
+            default:
+                element.classList.add('bg-secondary');
+        }
+    }
+    
+    // Initialize status badge
+    const statusBadge = document.getElementById('status');
+    if (statusBadge) {
+        const status = statusBadge.getAttribute('data-status');
+        if (status) {
+            updateStatusBadge(statusBadge, status);
+        }
+    }
+    
+    function append(text){
+        logEl.textContent += text;
+        if (autoScroll) {
+            scrollToBottom();
+        }
+    }
+    
+    function scrollToBottom() {
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+    
+    function toggleAutoScroll() {
+        autoScroll = !autoScroll;
+        if (autoScroll) {
+            autoScrollBtn.style.backgroundColor = 'var(--secondary)';
+            autoScrollBtn.style.color = 'white';
+            scrollToBottom();
+        } else {
+            autoScrollBtn.style.backgroundColor = '';
+            autoScrollBtn.style.color = '';
+        }
+    }
+    
+    function clearConsole() {
+        logEl.textContent = '';
+        showToast('Console cleared', 'info');
+    }
+    
+    function updateLiveIndicator(connected) {
+        if (connected) {
+            liveIndicator.className = 'badge bg-success ms-2';
+            liveIndicator.innerHTML = '📡 Live';
+        } else {
+            liveIndicator.className = 'badge bg-warning ms-2';
+            liveIndicator.innerHTML = '📴 Disconnected';
+        }
+    }
+    
+    // Make functions globally available
+    window.clearConsole = clearConsole;
+    window.scrollToBottom = scrollToBottom;
+    window.toggleAutoScroll = toggleAutoScroll;
+    
+    // WebSocket connection for live logs
+    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+        console.log('WebSocket connected for live logs');
+        wsConnected = true;
+        updateLiveIndicator(true);
+        showToast('Connected to live output stream', 'success');
+    };
+    
+    ws.onmessage = (ev) => {
+        append(ev.data);
+    };
+    
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        wsConnected = false;
+        updateLiveIndicator(false);
+        showToast('Connection error. Live output may be interrupted.', 'warning');
+    };
+    
+    ws.onclose = () => {
+        console.log('WebSocket connection closed');
+        wsConnected = false;
+        updateLiveIndicator(false);
+        showToast('Live output stream disconnected', 'warning');
+    };
+    
+    // Scroll to bottom initially if there's content
+    if (logEl.textContent.trim()) {
+        scrollToBottom();
+    }
 })();
 </script>
-</body>
-</html>
+{% endblock %}

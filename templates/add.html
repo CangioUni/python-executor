@@ -1,22 +1,141 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Add Script</title>
-</head>
-<body>
-<h1>Add New Script</h1>
-<form method="post">
-<label>Script Path: <input type="text" name="path" required style="width:400px"></label><br><br>
-<label>Arguments: <input type="text" name="args" placeholder="e.g. --foo 123"></label><br><br>
-<label>Restart Policy:
-<select name="policy">
-<option value="never">never</option>
-<option value="on-failure" selected>on-failure</option>
-<option value="always">always</option>
-</select>
-</label><br><br>
-<button type="submit">Add</button>
-</form>
-<p><a href="/">Back to list</a></p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Add New Script - Script Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">
+                    ➕ Add New Script
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="addScriptForm">
+                    <div class="mb-3">
+                        <label for="scriptPath" class="form-label">
+                            📄 Script Path <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="scriptPath"
+                            name="path" 
+                            required 
+                            placeholder="/path/to/your/script.py"
+                            autocomplete="off"
+                        >
+                        <div class="form-text">
+                            Full path to the Python script you want to manage
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="scriptArgs" class="form-label">
+                            💻 Arguments
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="scriptArgs"
+                            name="args" 
+                            placeholder="--flag value --option"
+                            autocomplete="off"
+                        >
+                        <div class="form-text">
+                            Command line arguments to pass to the script (optional)
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="restartPolicy" class="form-label">
+                            🔄 Restart Policy
+                        </label>
+                        <select class="form-control" id="restartPolicy" name="policy">
+                            <option value="never">Never - Don't restart on exit</option>
+                            <option value="on-failure" selected>On Failure - Restart only on error</option>
+                            <option value="always">Always - Always restart on exit</option>
+                        </select>
+                        <div class="form-text">
+                            Choose when the script should be automatically restarted
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="/" class="btn btn-outline-secondary">
+                            ← Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            ✅ Add Script
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Help Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title">
+                    ❓ Quick Help
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Script Path Examples:</h6>
+                        <ul style="list-style: none; padding-left: 0; font-size: 0.875rem; color: var(--text-muted);">
+                            <li><code>/home/user/scripts/monitor.py</code></li>
+                            <li><code>./scripts/worker.py</code></li>
+                            <li><code>/opt/app/main.py</code></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Arguments Examples:</h6>
+                        <ul style="list-style: none; padding-left: 0; font-size: 0.875rem; color: var(--text-muted);">
+                            <li><code>--config /etc/app.conf</code></li>
+                            <li><code>--port 8080 --debug</code></li>
+                            <li><code>--input data.csv --output results/</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('addScriptForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '⏳ Adding...';
+    submitBtn.disabled = true;
+    
+    // Reset button state after a delay (form will redirect, but in case of error)
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 3000);
+});
+
+// Form validation feedback
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        const form = document.getElementById('addScriptForm');
+        form.addEventListener('submit', function(event) {
+            if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+                showToast('Please fill in all required fields correctly.', 'danger');
+            }
+        }, false);
+    }, false);
+})();
+</script>
+{% endblock %}

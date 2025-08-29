@@ -1,0 +1,10 @@
+{
+  "demo_script.py": {
+    "path": "/home/runner/work/web-interface/web-interface/demo_script.py",
+    "args": [
+      "--demo",
+      "--verbose"
+    ],
+    "policy": "on-failure"
+  }
+}
