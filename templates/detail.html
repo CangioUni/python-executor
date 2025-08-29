@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Script Details</title>
+<style>
+pre { background:#eee; padding:10px; max-height:400px; overflow:auto; }
+.meta { color:#555; }
+</style>
+</head>
+<body>
+<h1>Details for {{ name }}</h1>
+<p class="meta"><b>Path:</b> {{ script.path }}</p>
+<p class="meta"><b>Arguments:</b> {{ script.args }}</p>
+<p class="meta"><b>Restart Policy:</b> {{ script.policy }}</p>
+<p><b>Status:</b> <span id="status">{{ runtime.status }}</span></p>
+<p><b>Running Time:</b> <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s</p>
+<p><b>Last Return Code:</b> <span id="returncode">{{ runtime.returncode }}</span></p>
+
+
+<h2>Console Output (live)</h2>
+<pre id="log">{{ runtime.output }}</pre>
+
+
+<p>
+<a href="/start/{{ name }}">Start</a> |
+<a href="/stop/{{ name }}">Stop</a> |
+<a href="/">Back to list</a>
+</p>
+
+
+<script>
+(function(){
+const logEl = document.getElementById('log');
+function append(text){
+logEl.textContent += text;
+logEl.scrollTop = logEl.scrollHeight;
+}
+const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
+const ws = new WebSocket(wsUrl);
+ws.onmessage = (ev) => {
+append(ev.data);
+};
+})();
+</script>
+</body>
+</html>

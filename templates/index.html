@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Script Manager</title>
+<style>
+table { border-collapse: collapse; }
+td, th { border: 1px solid #ccc; padding: 6px 10px; }
+.status-running { color: green; font-weight: bold; }
+.status-error { color: #b00; font-weight: bold; }
+.status-stopped { color: #555; }
+</style>
+</head>
+<body>
+<h1>Scripts</h1>
+<a href="/add">Add New Script</a>
+<table>
+<tr><th>Name</th><th>Policy</th><th>Status</th><th>Actions</th></tr>
+{% for name, script in scripts.items() %}
+<tr data-name="{{ name }}">
+<td><a href="/script/{{ name }}">{{ name }}</a></td>
+<td>{{ script.policy }}</td>
+<td class="status" id="status-{{ name }}">{{ statuses[name] }}</td>
+<td>
+<a href="/start/{{ name }}">Start</a> |
+<a href="/stop/{{ name }}">Stop</a>
+</td>
+</tr>
+{% endfor %}
+</table>
+
+
+<script>
+(function(){
+function setStatus(name, status){
+const el = document.getElementById('status-' + name);
+if(!el) return;
+el.textContent = status;
+el.className = 'status status-' + status.replace(/\s+/g,'-');
+}
+const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/status');
+ws.onmessage = (ev) => {
+try {
+const data = JSON.parse(ev.data);
+Object.entries(data).forEach(([name, status])=> setStatus(name, status));
+} catch(e) { /* ignore */ }
+// send a ping to keep the loop going server-side
+ws.send('ping');
+};
+})();
+</script>
+</body>
+</html>

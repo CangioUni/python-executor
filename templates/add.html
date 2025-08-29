@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Add Script</title>
+</head>
+<body>
+<h1>Add New Script</h1>
+<form method="post">
+<label>Script Path: <input type="text" name="path" required style="width:400px"></label><br><br>
+<label>Arguments: <input type="text" name="args" placeholder="e.g. --foo 123"></label><br><br>
+<label>Restart Policy:
+<select name="policy">
+<option value="never">never</option>
+<option value="on-failure" selected>on-failure</option>
+<option value="always">always</option>
+</select>
+</label><br><br>
+<button type="submit">Add</button>
+</form>
+<p><a href="/">Back to list</a></p>
+</body>
+</html>
