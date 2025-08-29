@@ -1,52 +1,357 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Script Manager</title>
-<style>
-table { border-collapse: collapse; }
-td, th { border: 1px solid #ccc; padding: 6px 10px; }
-.status-running { color: green; font-weight: bold; }
-.status-error { color: #b00; font-weight: bold; }
-.status-stopped { color: #555; }
-</style>
-</head>
-<body>
-<h1>Scripts</h1>
-<a href="/add">Add New Script</a>
-<table>
-<tr><th>Name</th><th>Policy</th><th>Status</th><th>Actions</th></tr>
-{% for name, script in scripts.items() %}
-<tr data-name="{{ name }}">
-<td><a href="/script/{{ name }}">{{ name }}</a></td>
-<td>{{ script.policy }}</td>
-<td class="status" id="status-{{ name }}">{{ statuses[name] }}</td>
-<td>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a>
-</td>
-</tr>
-{% endfor %}
-</table>
+{% extends "base.html" %}
 
+{% block title %}Scripts - Script Manager{% endblock %}
 
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">
+            <i class="bi bi-list-ul me-2"></i>
+            Scripts Dashboard
+        </h1>
+        <p class="text-muted mb-0">Manage and monitor your Python scripts</p>
+    </div>
+    <a href="/add" class="btn btn-primary btn-lg">
+        <i class="bi bi-plus-circle me-2"></i>
+        Add New Script
+    </a>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-play-circle-fill fs-3 me-3"></i>
+                    <div>
+                        <h5 class="card-title mb-0" id="running-count">0</h5>
+                        <small>Running</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-stop-circle-fill fs-3 me-3"></i>
+                    <div>
+                        <h5 class="card-title mb-0" id="stopped-count">0</h5>
+                        <small>Stopped</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-3 me-3"></i>
+                    <div>
+                        <h5 class="card-title mb-0" id="error-count">0</h5>
+                        <small>Errors</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-layers-fill fs-3 me-3"></i>
+                    <div>
+                        <h5 class="card-title mb-0" id="total-count">{{ scripts|length }}</h5>
+                        <small>Total Scripts</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-table me-2"></i>
+            Scripts Overview
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        {% if scripts %}
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">
+                            <i class="bi bi-file-code me-1"></i>
+                            Name
+                        </th>
+                        <th scope="col">
+                            <i class="bi bi-arrow-repeat me-1"></i>
+                            Restart Policy
+                        </th>
+                        <th scope="col">
+                            <i class="bi bi-activity me-1"></i>
+                            Status
+                        </th>
+                        <th scope="col" class="text-center">
+                            <i class="bi bi-gear me-1"></i>
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, script in scripts.items() %}
+                    <tr data-name="{{ name }}">
+                        <td>
+                            <a href="/script/{{ name }}" class="text-decoration-none fw-semibold">
+                                <i class="bi bi-terminal me-2"></i>
+                                {{ name }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ script.policy }}</span>
+                        </td>
+                        <td>
+                            <span class="status-indicator status-{{ statuses[name] }}" id="status-{{ name }}">
+                                <span class="status-dot"></span>
+                                <span class="status-text">{{ statuses[name] }}</span>
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="/start/{{ name }}" class="btn btn-success" title="Start Script">
+                                    <i class="bi bi-play-fill"></i>
+                                    Start
+                                </a>
+                                <a href="/stop/{{ name }}" class="btn btn-danger" title="Stop Script">
+                                    <i class="bi bi-stop-fill"></i>
+                                    Stop
+                                </a>
+                                <a href="/script/{{ name }}" class="btn btn-info" title="View Details">
+                                    <i class="bi bi-eye-fill"></i>
+                                    Details
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+            <h4 class="text-muted">No Scripts Found</h4>
+            <p class="text-muted mb-4">Get started by adding your first Python script to manage.</p>
+            <a href="/add" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add Your First Script
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Connection Status Indicator -->
+<div class="fixed-bottom ms-3 mb-3">
+    <div class="toast" id="connectionToast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-wifi text-success me-2"></i>
+            <strong class="me-auto">Connection Status</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Real-time updates connected successfully!
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-(function(){
-function setStatus(name, status){
-const el = document.getElementById('status-' + name);
-if(!el) return;
-el.textContent = status;
-el.className = 'status status-' + status.replace(/\s+/g,'-');
-}
-const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/status');
-ws.onmessage = (ev) => {
-try {
-const data = JSON.parse(ev.data);
-Object.entries(data).forEach(([name, status])=> setStatus(name, status));
-} catch(e) { /* ignore */ }
-// send a ping to keep the loop going server-side
-ws.send('ping');
-};
+/**
+ * Enhanced Script Status Management System
+ * Handles real-time status updates via WebSocket with visual feedback
+ */
+(function() {
+    let ws = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    const reconnectDelay = 3000;
+    
+    /**
+     * Initialize WebSocket connection for real-time status updates
+     */
+    function initWebSocket() {
+        const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/status';
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = function() {
+            console.log('WebSocket connected successfully');
+            reconnectAttempts = 0;
+            showConnectionToast('Connected to real-time updates', 'success');
+        };
+        
+        ws.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                Object.entries(data).forEach(([name, status]) => updateScriptStatus(name, status));
+                updateStatistics();
+                
+                // Send ping to keep connection alive
+                ws.send('ping');
+            } catch(e) {
+                console.error('Error parsing WebSocket message:', e);
+            }
+        };
+        
+        ws.onclose = function() {
+            console.log('WebSocket connection closed');
+            if (reconnectAttempts < maxReconnectAttempts) {
+                setTimeout(attemptReconnect, reconnectDelay);
+            } else {
+                showConnectionToast('Connection lost. Please refresh the page.', 'error');
+            }
+        };
+        
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            showConnectionToast('Connection error occurred', 'warning');
+        };
+    }
+    
+    /**
+     * Attempt to reconnect WebSocket
+     */
+    function attemptReconnect() {
+        reconnectAttempts++;
+        console.log(`Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
+        showConnectionToast(`Reconnecting... (${reconnectAttempts}/${maxReconnectAttempts})`, 'warning');
+        initWebSocket();
+    }
+    
+    /**
+     * Update the status of a specific script in the UI
+     * @param {string} name - Script name
+     * @param {string} status - New status
+     */
+    function updateScriptStatus(name, status) {
+        const statusElement = document.getElementById('status-' + name);
+        if (!statusElement) return;
+        
+        // Remove old status classes
+        statusElement.className = 'status-indicator';
+        
+        // Add new status class and update content
+        statusElement.classList.add('status-' + status.replace(/\s+/g, '-'));
+        
+        const statusText = statusElement.querySelector('.status-text');
+        if (statusText) {
+            statusText.textContent = status;
+        }
+        
+        // Add brief highlight animation
+        statusElement.style.transition = 'background-color 0.3s ease';
+        statusElement.style.backgroundColor = 'rgba(var(--bs-primary-rgb), 0.1)';
+        setTimeout(() => {
+            statusElement.style.backgroundColor = '';
+        }, 300);
+    }
+    
+    /**
+     * Update the statistics cards with current counts
+     */
+    function updateStatistics() {
+        const statusElements = document.querySelectorAll('[id^="status-"]');
+        let runningCount = 0;
+        let stoppedCount = 0;
+        let errorCount = 0;
+        
+        statusElements.forEach(element => {
+            const statusText = element.querySelector('.status-text');
+            if (statusText) {
+                const status = statusText.textContent.toLowerCase();
+                if (status === 'running') runningCount++;
+                else if (status === 'stopped') stoppedCount++;
+                else if (status === 'error') errorCount++;
+            }
+        });
+        
+        // Update counters with animation
+        animateCounter('running-count', runningCount);
+        animateCounter('stopped-count', stoppedCount);
+        animateCounter('error-count', errorCount);
+    }
+    
+    /**
+     * Animate counter value changes
+     * @param {string} elementId - Counter element ID
+     * @param {number} newValue - New counter value
+     */
+    function animateCounter(elementId, newValue) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const currentValue = parseInt(element.textContent) || 0;
+        if (currentValue !== newValue) {
+            element.style.transform = 'scale(1.1)';
+            element.textContent = newValue;
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+            }, 200);
+        }
+    }
+    
+    /**
+     * Show connection status toast notification
+     * @param {string} message - Toast message
+     * @param {string} type - Toast type (success, warning, error)
+     */
+    function showConnectionToast(message, type) {
+        const toastElement = document.getElementById('connectionToast');
+        const toastBody = toastElement.querySelector('.toast-body');
+        const toastIcon = toastElement.querySelector('.bi');
+        
+        // Update toast content
+        toastBody.textContent = message;
+        
+        // Update icon based on type
+        toastIcon.className = 'bi me-2';
+        switch(type) {
+            case 'success':
+                toastIcon.classList.add('bi-wifi', 'text-success');
+                break;
+            case 'warning':
+                toastIcon.classList.add('bi-exclamation-triangle', 'text-warning');
+                break;
+            case 'error':
+                toastIcon.classList.add('bi-wifi-off', 'text-danger');
+                break;
+        }
+        
+        // Show toast
+        const toast = new Toast(toastElement);
+        toast.show();
+    }
+    
+    // Initialize tooltips for all buttons
+    document.querySelectorAll('[title]').forEach(element => {
+        new Tooltip(element, { title: element.getAttribute('title') });
+    });
+    
+    // Initialize WebSocket connection
+    initWebSocket();
+    
+    // Initial statistics update
+    updateStatistics();
 })();
 </script>
-</body>
-</html>
+{% endblock %}

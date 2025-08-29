@@ -1,22 +1,398 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Add Script</title>
-</head>
-<body>
-<h1>Add New Script</h1>
-<form method="post">
-<label>Script Path: <input type="text" name="path" required style="width:400px"></label><br><br>
-<label>Arguments: <input type="text" name="args" placeholder="e.g. --foo 123"></label><br><br>
-<label>Restart Policy:
-<select name="policy">
-<option value="never">never</option>
-<option value="on-failure" selected>on-failure</option>
-<option value="always">always</option>
-</select>
-</label><br><br>
-<button type="submit">Add</button>
-</form>
-<p><a href="/">Back to list</a></p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Add Script - Script Manager{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="/" class="text-decoration-none">
+                        <i class="bi bi-house-fill"></i> Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Add Script</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-1">
+            <i class="bi bi-plus-circle me-2"></i>
+            Add New Script
+        </h1>
+        <p class="text-muted mb-0">Configure a new Python script for monitoring and management</p>
+    </div>
+</div>
+
+<!-- Add Script Form -->
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-file-code me-2"></i>
+                    Script Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="addScriptForm" novalidate>
+                    <!-- Script Path -->
+                    <div class="mb-4">
+                        <label for="path" class="form-label">
+                            <i class="bi bi-folder me-1"></i>
+                            Script Path <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-file-python"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                class="form-control form-control-lg" 
+                                id="path" 
+                                name="path" 
+                                placeholder="/path/to/your/script.py"
+                                required
+                                autocomplete="off"
+                            >
+                            <div class="invalid-feedback">
+                                Please provide a valid script path.
+                            </div>
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Enter the full path to your Python script file (e.g., /home/user/scripts/my_script.py)
+                        </div>
+                    </div>
+
+                    <!-- Arguments -->
+                    <div class="mb-4">
+                        <label for="args" class="form-label">
+                            <i class="bi bi-terminal me-1"></i>
+                            Command Line Arguments
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-dash-lg"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                class="form-control form-control-lg" 
+                                id="args" 
+                                name="args" 
+                                placeholder="--verbose --output /tmp/output.txt"
+                                autocomplete="off"
+                            >
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Optional: Space-separated command line arguments for your script
+                        </div>
+                    </div>
+
+                    <!-- Restart Policy -->
+                    <div class="mb-4">
+                        <label for="policy" class="form-label">
+                            <i class="bi bi-arrow-repeat me-1"></i>
+                            Restart Policy
+                        </label>
+                        <select class="form-select form-select-lg" id="policy" name="policy">
+                            <option value="never">
+                                <i class="bi bi-x-circle"></i>
+                                Never - Don't restart the script automatically
+                            </option>
+                            <option value="on-failure" selected>
+                                <i class="bi bi-exclamation-triangle"></i>
+                                On Failure - Restart only when script exits with error
+                            </option>
+                            <option value="always">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                Always - Always restart the script when it exits
+                            </option>
+                        </select>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Choose when the script should be automatically restarted
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a href="/" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Add Script
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Section -->
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="card bg-light">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-question-circle me-2"></i>
+                    Need Help?
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-file-code me-1"></i> Script Requirements</h6>
+                        <ul class="small text-muted">
+                            <li>Must be a valid Python script (.py file)</li>
+                            <li>Script should be executable</li>
+                            <li>Use absolute paths for best results</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-gear me-1"></i> Restart Policies</h6>
+                        <ul class="small text-muted">
+                            <li><strong>Never:</strong> Run once, don't restart</li>
+                            <li><strong>On Failure:</strong> Restart if exit code ≠ 0</li>
+                            <li><strong>Always:</strong> Restart regardless of exit code</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast -->
+<div class="position-fixed bottom-0 end-0 p-3">
+    <div class="toast" id="successToast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Script added successfully!
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+/**
+ * Enhanced Add Script Form Management
+ * Handles form validation, user experience improvements, and submission
+ */
+(function() {
+    const form = document.getElementById('addScriptForm');
+    const pathInput = document.getElementById('path');
+    const argsInput = document.getElementById('args');
+    const policySelect = document.getElementById('policy');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    /**
+     * Initialize form validation and enhancements
+     */
+    function initForm() {
+        // Add real-time validation
+        pathInput.addEventListener('input', validatePath);
+        pathInput.addEventListener('blur', validatePath);
+        
+        // Add file path autocomplete hints
+        pathInput.addEventListener('input', showPathHints);
+        
+        // Form submission handling
+        form.addEventListener('submit', handleSubmit);
+        
+        // Initialize tooltips
+        initTooltips();
+    }
+    
+    /**
+     * Validate the script path input
+     */
+    function validatePath() {
+        const path = pathInput.value.trim();
+        const isValid = path.length > 0 && 
+                       (path.endsWith('.py') || path.includes('.py')) &&
+                       path.startsWith('/');
+        
+        if (path.length === 0) {
+            setFieldState(pathInput, null);
+        } else if (isValid) {
+            setFieldState(pathInput, true);
+        } else {
+            setFieldState(pathInput, false, 'Please enter a valid absolute path to a Python script');
+        }
+        
+        return isValid || path.length === 0;
+    }
+    
+    /**
+     * Set the validation state of a form field
+     * @param {HTMLElement} field - Form field element
+     * @param {boolean|null} isValid - Validation state (null = neutral)
+     * @param {string} message - Error message
+     */
+    function setFieldState(field, isValid, message = '') {
+        field.classList.remove('is-valid', 'is-invalid');
+        
+        if (isValid === true) {
+            field.classList.add('is-valid');
+        } else if (isValid === false) {
+            field.classList.add('is-invalid');
+            const feedback = field.parentElement.querySelector('.invalid-feedback');
+            if (feedback && message) {
+                feedback.textContent = message;
+            }
+        }
+    }
+    
+    /**
+     * Show helpful path completion hints
+     */
+    function showPathHints() {
+        const path = pathInput.value.trim();
+        
+        // Auto-suggest .py extension
+        if (path.length > 0 && !path.includes('.') && path !== '/') {
+            // Could add autocomplete dropdown here in the future
+        }
+    }
+    
+    /**
+     * Handle form submission with validation and user feedback
+     * @param {Event} event - Form submit event
+     */
+    function handleSubmit(event) {
+        event.preventDefault();
+        
+        // Validate all fields
+        const isPathValid = validatePath();
+        
+        if (!isPathValid) {
+            // Focus on first invalid field
+            pathInput.focus();
+            showFormError('Please fix the validation errors before submitting.');
+            return;
+        }
+        
+        // Show loading state
+        setSubmitLoading(true);
+        
+        // Submit the form
+        submitForm();
+    }
+    
+    /**
+     * Submit the form data
+     */
+    function submitForm() {
+        const formData = new FormData(form);
+        
+        fetch(form.action || '/add', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                // Show success message
+                showSuccessToast();
+                
+                // Redirect after a short delay
+                setTimeout(() => {
+                    window.location.href = response.url || '/';
+                }, 1500);
+            } else {
+                throw new Error('Failed to add script');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showFormError('Failed to add script. Please try again.');
+            setSubmitLoading(false);
+        });
+    }
+    
+    /**
+     * Set the loading state of the submit button
+     * @param {boolean} loading - Whether to show loading state
+     */
+    function setSubmitLoading(loading) {
+        if (loading) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>Adding...';
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Add Script';
+        }
+    }
+    
+    /**
+     * Show form error message
+     * @param {string} message - Error message
+     */
+    function showFormError(message) {
+        // Create or update error alert
+        let errorAlert = document.getElementById('errorAlert');
+        if (!errorAlert) {
+            errorAlert = document.createElement('div');
+            errorAlert.id = 'errorAlert';
+            errorAlert.className = 'alert alert-danger alert-dismissible fade show';
+            errorAlert.innerHTML = `
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <span id="errorMessage"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            form.insertBefore(errorAlert, form.firstChild);
+        }
+        
+        document.getElementById('errorMessage').textContent = message;
+        errorAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    /**
+     * Show success toast notification
+     */
+    function showSuccessToast() {
+        const toastElement = document.getElementById('successToast');
+        const toast = new Toast(toastElement);
+        toast.show();
+    }
+    
+    /**
+     * Initialize tooltips for all relevant elements
+     */
+    function initTooltips() {
+        document.querySelectorAll('[title]').forEach(element => {
+            new Tooltip(element, { title: element.getAttribute('title') });
+        });
+    }
+    
+    // Add CSS for loading animation
+    const style = document.createElement('style');
+    style.textContent = `
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Initialize the form when DOM is loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initForm);
+    } else {
+        initForm();
+    }
+})();
+</script>
+{% endblock %}

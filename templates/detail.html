@@ -1,46 +1,382 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Script Details</title>
-<style>
-pre { background:#eee; padding:10px; max-height:400px; overflow:auto; }
-.meta { color:#555; }
-</style>
-</head>
-<body>
-<h1>Details for {{ name }}</h1>
-<p class="meta"><b>Path:</b> {{ script.path }}</p>
-<p class="meta"><b>Arguments:</b> {{ script.args }}</p>
-<p class="meta"><b>Restart Policy:</b> {{ script.policy }}</p>
-<p><b>Status:</b> <span id="status">{{ runtime.status }}</span></p>
-<p><b>Running Time:</b> <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s</p>
-<p><b>Last Return Code:</b> <span id="returncode">{{ runtime.returncode }}</span></p>
+{% extends "base.html" %}
 
+{% block title %}{{ name }} - Script Details{% endblock %}
 
-<h2>Console Output (live)</h2>
-<pre id="log">{{ runtime.output }}</pre>
+{% block content %}
+<!-- Page Header with Navigation -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="/" class="text-decoration-none">
+                        <i class="bi bi-house-fill"></i> Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">{{ name }}</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-1">
+            <i class="bi bi-terminal me-2"></i>
+            {{ name }}
+        </h1>
+        <p class="text-muted mb-0">Script details and live monitoring</p>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="btn-group" role="group">
+        <a href="/start/{{ name }}" class="btn btn-success btn-lg" title="Start Script">
+            <i class="bi bi-play-fill me-2"></i>
+            Start
+        </a>
+        <a href="/stop/{{ name }}" class="btn btn-danger btn-lg" title="Stop Script">
+            <i class="bi bi-stop-fill me-2"></i>
+            Stop
+        </a>
+        <a href="/" class="btn btn-outline-primary btn-lg" title="Back to Dashboard">
+            <i class="bi bi-arrow-left me-2"></i>
+            Back
+        </a>
+    </div>
+</div>
 
+<!-- Status Overview Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-activity fs-3 text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title text-muted mb-1">Status</h6>
+                        <div class="status-indicator status-{{ runtime.status }}" id="current-status">
+                            <span class="status-dot"></span>
+                            <span class="status-text fw-bold">{{ runtime.status }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-clock fs-3 text-info"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title text-muted mb-1">Running Time</h6>
+                        <span class="fw-bold" id="running-time">
+                            {% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}s
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-code-slash fs-3 text-warning"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title text-muted mb-1">Return Code</h6>
+                        <span class="fw-bold" id="returncode">
+                            {% if runtime.returncode is not none %}{{ runtime.returncode }}{% else %}N/A{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-arrow-repeat fs-3 text-secondary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title text-muted mb-1">Restart Policy</h6>
+                        <span class="badge bg-secondary">{{ script.policy }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<p>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a> |
-<a href="/">Back to list</a>
-</p>
+<!-- Script Configuration -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>
+                    Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">
+                        <i class="bi bi-folder me-1"></i>
+                        Script Path:
+                    </dt>
+                    <dd class="col-sm-9">
+                        <code class="text-muted">{{ script.path }}</code>
+                    </dd>
+                    
+                    <dt class="col-sm-3">
+                        <i class="bi bi-terminal me-1"></i>
+                        Arguments:
+                    </dt>
+                    <dd class="col-sm-9">
+                        {% if script.args %}
+                            <code class="text-muted">{{ script.args|join(' ') }}</code>
+                        {% else %}
+                            <span class="text-muted font-italic">No arguments</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Console Output -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-terminal-fill me-2"></i>
+                    Console Output
+                    <span class="badge bg-info ms-2">Live</span>
+                </h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" id="clearLog" title="Clear Display">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" id="pauseLog" title="Pause Auto-scroll">
+                        <i class="bi bi-pause"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" id="downloadLog" title="Download Log">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <pre class="console-output m-0 p-3" id="log">{{ runtime.output }}</pre>
+            </div>
+            <div class="card-footer">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Auto-scrolling enabled. Click pause to stop auto-scroll.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Connection Status -->
+<div class="position-fixed bottom-0 end-0 p-3">
+    <div class="toast" id="connectionStatus" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-broadcast text-primary me-2"></i>
+            <strong class="me-auto">Live Updates</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Connected to live console output
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-(function(){
-const logEl = document.getElementById('log');
-function append(text){
-logEl.textContent += text;
-logEl.scrollTop = logEl.scrollHeight;
-}
-const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
-const ws = new WebSocket(wsUrl);
-ws.onmessage = (ev) => {
-append(ev.data);
-};
+/**
+ * Enhanced Script Detail Management System
+ * Handles live console output, status updates, and user interactions
+ */
+(function() {
+    let ws = null;
+    let autoScroll = true;
+    let logContent = '';
+    const logElement = document.getElementById('log');
+    const pauseButton = document.getElementById('pauseLog');
+    const clearButton = document.getElementById('clearLog');
+    const downloadButton = document.getElementById('downloadLog');
+    
+    /**
+     * Initialize WebSocket connection for live console output
+     */
+    function initWebSocket() {
+        const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + 
+                     location.host + '/ws/logs/{{ name }}';
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = function() {
+            console.log('Console WebSocket connected');
+            showConnectionToast('Connected to live console output', 'success');
+        };
+        
+        ws.onmessage = function(event) {
+            appendToLog(event.data);
+        };
+        
+        ws.onclose = function() {
+            console.log('Console WebSocket disconnected');
+            showConnectionToast('Console connection lost', 'warning');
+            // Attempt to reconnect after 3 seconds
+            setTimeout(initWebSocket, 3000);
+        };
+        
+        ws.onerror = function(error) {
+            console.error('Console WebSocket error:', error);
+            showConnectionToast('Console connection error', 'error');
+        };
+    }
+    
+    /**
+     * Append text to the console log
+     * @param {string} text - Text to append
+     */
+    function appendToLog(text) {
+        logContent += text;
+        logElement.textContent = logContent;
+        
+        // Auto-scroll to bottom if enabled
+        if (autoScroll) {
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // Limit log size to prevent memory issues (keep last 50KB)
+        if (logContent.length > 50000) {
+            logContent = logContent.slice(-40000);
+            logElement.textContent = logContent;
+        }
+    }
+    
+    /**
+     * Clear the console display (not the actual log)
+     */
+    function clearLogDisplay() {
+        logElement.textContent = '';
+        logContent = '';
+    }
+    
+    /**
+     * Toggle auto-scroll functionality
+     */
+    function toggleAutoScroll() {
+        autoScroll = !autoScroll;
+        const icon = pauseButton.querySelector('i');
+        
+        if (autoScroll) {
+            icon.className = 'bi bi-pause';
+            pauseButton.title = 'Pause Auto-scroll';
+            pauseButton.classList.remove('active');
+            // Scroll to bottom when re-enabling
+            logElement.scrollTop = logElement.scrollHeight;
+        } else {
+            icon.className = 'bi bi-play';
+            pauseButton.title = 'Resume Auto-scroll';
+            pauseButton.classList.add('active');
+        }
+    }
+    
+    /**
+     * Download the current log content
+     */
+    function downloadLog() {
+        const blob = new Blob([logContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `{{ name }}_log_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+    
+    /**
+     * Show connection status toast
+     * @param {string} message - Toast message
+     * @param {string} type - Toast type
+     */
+    function showConnectionToast(message, type) {
+        const toastElement = document.getElementById('connectionStatus');
+        const toastBody = toastElement.querySelector('.toast-body');
+        const toastIcon = toastElement.querySelector('.bi');
+        
+        toastBody.textContent = message;
+        
+        // Update icon based on type
+        toastIcon.className = 'bi me-2';
+        switch(type) {
+            case 'success':
+                toastIcon.classList.add('bi-broadcast', 'text-success');
+                break;
+            case 'warning':
+                toastIcon.classList.add('bi-exclamation-triangle', 'text-warning');
+                break;
+            case 'error':
+                toastIcon.classList.add('bi-broadcast-pin', 'text-danger');
+                break;
+        }
+        
+        const toast = new Toast(toastElement);
+        toast.show();
+    }
+    
+    /**
+     * Update running time display
+     */
+    function updateRunningTime() {
+        const startTime = {{ runtime.start_time or 'null' }};
+        if (startTime) {
+            const currentTime = Date.now() / 1000;
+            const runningTime = currentTime - startTime;
+            document.getElementById('running-time').textContent = runningTime.toFixed(1) + 's';
+        }
+    }
+    
+    // Event listeners
+    pauseButton.addEventListener('click', toggleAutoScroll);
+    clearButton.addEventListener('click', clearLogDisplay);
+    downloadButton.addEventListener('click', downloadLog);
+    
+    // Initialize tooltips
+    document.querySelectorAll('[title]').forEach(element => {
+        new Tooltip(element, { title: element.getAttribute('title') });
+    });
+    
+    // Initialize WebSocket
+    initWebSocket();
+    
+    // Update running time every 5 seconds
+    setInterval(updateRunningTime, 5000);
+    
+    // Detect manual scroll to pause auto-scroll
+    logElement.addEventListener('scroll', function() {
+        const isScrolledToBottom = logElement.scrollHeight - logElement.clientHeight <= logElement.scrollTop + 10;
+        if (!isScrolledToBottom && autoScroll) {
+            toggleAutoScroll();
+        }
+    });
+    
+    // Initialize log content
+    logContent = logElement.textContent;
 })();
 </script>
-</body>
-</html>
+{% endblock %}
