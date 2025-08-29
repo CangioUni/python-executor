@@ -1,0 +1,19 @@
+{
+  "python3": {
+    "path": "/usr/bin/python3",
+    "args": [
+      "-c",
+      "\"import",
+      "time;",
+      "[print(f'Hello",
+      "{i}')",
+      "or",
+      "time.sleep(1)",
+      "for",
+      "i",
+      "in",
+      "range(100)]\""
+    ],
+    "policy": "on-failure"
+  }
+}

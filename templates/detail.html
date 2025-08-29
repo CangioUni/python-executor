@@ -1,46 +1,308 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Script Details</title>
-<style>
-pre { background:#eee; padding:10px; max-height:400px; overflow:auto; }
-.meta { color:#555; }
-</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ name }} - Script Manager</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<h1>Details for {{ name }}</h1>
-<p class="meta"><b>Path:</b> {{ script.path }}</p>
-<p class="meta"><b>Arguments:</b> {{ script.args }}</p>
-<p class="meta"><b>Restart Policy:</b> {{ script.policy }}</p>
-<p><b>Status:</b> <span id="status">{{ runtime.status }}</span></p>
-<p><b>Running Time:</b> <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s</p>
-<p><b>Last Return Code:</b> <span id="returncode">{{ runtime.returncode }}</span></p>
+<header class="header">
+  <div class="container">
+    <div class="header-content">
+      <h1><i class="fas fa-terminal"></i> Script Manager</h1>
+      <nav class="nav-links">
+        <a href="/" class="btn btn-outline">
+          <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+      </nav>
+    </div>
+  </div>
+</header>
 
+<main class="main-content">
+  <div class="container">
+    <!-- Script Header Card -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="fas fa-file-code"></i> {{ name }}
+        </h2>
+      </div>
+      <div class="card-body">
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="meta-label">Script Path</div>
+            <div class="meta-value">{{ script.path }}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Arguments</div>
+            <div class="meta-value">{{ script.args if script.args else 'None' }}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Restart Policy</div>
+            <div class="meta-value" style="text-transform: capitalize;">{{ script.policy }}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Status</div>
+            <div class="meta-value">
+              <span class="status status-{{ runtime.status.replace(' ', '-') }}" id="status">
+                <i class="fas fa-circle status-icon"></i>
+                <span class="status-text">{{ runtime.status }}</span>
+              </span>
+            </div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Running Time</div>
+            <div class="meta-value">
+              <span id="running-time">{% if runtime.running_time %}{{ '%.1f'|format(runtime.running_time) }}{% else %}0{% endif %}</span>s
+            </div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Last Return Code</div>
+            <div class="meta-value">
+              <span id="returncode" class="{% if runtime.returncode == 0 %}text-success{% elif runtime.returncode %}text-error{% endif %}">
+                {{ runtime.returncode if runtime.returncode is not none else 'N/A' }}
+              </span>
+            </div>
+          </div>
+        </div>
 
-<h2>Console Output (live)</h2>
-<pre id="log">{{ runtime.output }}</pre>
+        <div class="action-buttons">
+          <a href="/start/{{ name }}" class="btn btn-success">
+            <i class="fas fa-play"></i> Start Script
+          </a>
+          <a href="/stop/{{ name }}" class="btn btn-danger">
+            <i class="fas fa-stop"></i> Stop Script
+          </a>
+        </div>
+      </div>
+    </div>
 
-
-<p>
-<a href="/start/{{ name }}">Start</a> |
-<a href="/stop/{{ name }}">Stop</a> |
-<a href="/">Back to list</a>
-</p>
-
+    <!-- Console Output Card -->
+    <div class="card">
+      <div class="log-container">
+        <div class="log-header">
+          <i class="fas fa-terminal"></i>
+          Console Output (Live)
+          <div style="margin-left: auto; display: flex; align-items: center; gap: 1rem;">
+            <button id="clearLog" class="btn btn-sm btn-secondary">
+              <i class="fas fa-trash"></i> Clear
+            </button>
+            <button id="toggleScroll" class="btn btn-sm btn-secondary">
+              <i class="fas fa-lock"></i> Auto-scroll
+            </button>
+            <span class="status-indicator" id="connectionStatus">
+              <i class="fas fa-circle" style="color: var(--success-color);"></i>
+              Connected
+            </span>
+          </div>
+        </div>
+        <div class="log-content" id="log">{{ runtime.output }}</div>
+      </div>
+    </div>
+  </div>
+</main>
 
 <script>
 (function(){
+let autoScroll = true;
+let logLines = 0;
+const maxLines = 1000; // Limit log lines for performance
+
 const logEl = document.getElementById('log');
-function append(text){
-logEl.textContent += text;
-logEl.scrollTop = logEl.scrollHeight;
+const connectionStatus = document.getElementById('connectionStatus');
+const toggleScrollBtn = document.getElementById('toggleScroll');
+const clearLogBtn = document.getElementById('clearLog');
+
+function append(text) {
+  logEl.textContent += text;
+  logLines++;
+  
+  // Trim logs if they get too long
+  if (logLines > maxLines) {
+    const lines = logEl.textContent.split('\n');
+    logEl.textContent = lines.slice(-Math.floor(maxLines * 0.8)).join('\n');
+    logLines = Math.floor(maxLines * 0.8);
+  }
+  
+  if (autoScroll) {
+    logEl.scrollTop = logEl.scrollHeight;
+  }
 }
+
+function updateConnectionStatus(connected) {
+  const icon = connectionStatus.querySelector('i');
+  const text = connectionStatus.childNodes[connectionStatus.childNodes.length - 1];
+  
+  if (connected) {
+    icon.style.color = 'var(--success-color)';
+    text.textContent = ' Connected';
+  } else {
+    icon.style.color = 'var(--error-color)';
+    text.textContent = ' Disconnected';
+  }
+}
+
+// WebSocket for live logs
 const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/logs/{{ name }}';
 const ws = new WebSocket(wsUrl);
+
+ws.onopen = () => updateConnectionStatus(true);
+ws.onclose = () => updateConnectionStatus(false);
+ws.onerror = () => updateConnectionStatus(false);
+
 ws.onmessage = (ev) => {
-append(ev.data);
+  append(ev.data);
 };
+
+// Toggle auto-scroll
+toggleScrollBtn.addEventListener('click', () => {
+  autoScroll = !autoScroll;
+  const icon = toggleScrollBtn.querySelector('i');
+  
+  if (autoScroll) {
+    icon.className = 'fas fa-lock';
+    toggleScrollBtn.innerHTML = '<i class="fas fa-lock"></i> Auto-scroll';
+    logEl.scrollTop = logEl.scrollHeight;
+  } else {
+    icon.className = 'fas fa-unlock';
+    toggleScrollBtn.innerHTML = '<i class="fas fa-unlock"></i> Manual scroll';
+  }
+});
+
+// Clear log
+clearLogBtn.addEventListener('click', () => {
+  if (confirm('Are you sure you want to clear the console output?')) {
+    logEl.textContent = '';
+    logLines = 0;
+  }
+});
+
+// Detect manual scroll to disable auto-scroll
+logEl.addEventListener('scroll', () => {
+  if (autoScroll) {
+    const isAtBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 10;
+    if (!isAtBottom) {
+      autoScroll = false;
+      const icon = toggleScrollBtn.querySelector('i');
+      icon.className = 'fas fa-unlock';
+      toggleScrollBtn.innerHTML = '<i class="fas fa-unlock"></i> Manual scroll';
+    }
+  }
+});
+
+// Add loading states to action buttons
+document.addEventListener('click', function(e) {
+  if (e.target.matches('.btn[href*="/start/"], .btn[href*="/stop/"]')) {
+    const btn = e.target;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    btn.style.pointerEvents = 'none';
+    
+    setTimeout(() => {
+      btn.innerHTML = originalContent;
+      btn.style.pointerEvents = '';
+    }, 2000);
+  }
+});
+
+// Update status indicators with proper icons
+function updateStatusDisplay(status) {
+  const statusEl = document.getElementById('status');
+  if (!statusEl) return;
+  
+  const icon = statusEl.querySelector('.status-icon');
+  const text = statusEl.querySelector('.status-text');
+  
+  if (text) text.textContent = status;
+  
+  // Update status class and icon
+  statusEl.className = 'status status-' + status.replace(/\s+/g,'-');
+  
+  if (icon) {
+    if (status === 'running') {
+      icon.className = 'fas fa-play-circle status-icon';
+    } else if (status === 'stopped') {
+      icon.className = 'fas fa-stop-circle status-icon';
+    } else if (status.includes('error') || status.includes('failed')) {
+      icon.className = 'fas fa-exclamation-circle status-icon';
+    } else {
+      icon.className = 'fas fa-circle status-icon';
+    }
+  }
+}
+
+// Initialize status icon
+const currentStatus = document.querySelector('#status .status-text')?.textContent;
+if (currentStatus) {
+  updateStatusDisplay(currentStatus);
+}
+
 })();
 </script>
+
+<style>
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #e5e5e5;
+}
+
+.text-success {
+  color: var(--success-color) !important;
+}
+
+.text-error {
+  color: var(--error-color) !important;
+}
+
+.status-icon {
+  font-size: 0.75rem;
+}
+
+.status-running .status-icon {
+  color: var(--success-color);
+  animation: pulse 2s infinite;
+}
+
+.status-stopped .status-icon {
+  color: var(--secondary-color);
+}
+
+.status-error .status-icon,
+.status-failed .status-icon {
+  color: var(--error-color);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Responsive improvements for detail page */
+@media (max-width: 768px) {
+  .log-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .log-header > div {
+    margin-left: 0 !important;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .action-buttons {
+    justify-content: center;
+  }
+}
+</style>
 </body>
 </html>
