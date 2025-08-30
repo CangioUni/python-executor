@@ -3,6 +3,8 @@ import threading
 import time
 import json
 import queue
+import websocket
+import asyncio
 from pathlib import Path
 from typing import Dict, Any
 from fastapi.staticfiles import StaticFiles
@@ -65,8 +67,17 @@ def monitor_script(name: str, cmd: list, policy: str):
 
         start_time = time.time()
         # Merge stdout/stderr; decode as text
+        # proc = subprocess.Popen(
+        #     cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
+        # )
+        script_path = Path(cmd[1])  # cmd looks like ["python3", path, ...]
         proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            cwd=script_path.parent   # run in the script’s folder
         )
         with lock:
             processes[name]["process"] = proc
@@ -165,7 +176,7 @@ async def start_script(name: str):
     path = scripts[name]["path"]
     args = scripts[name].get("args", [])
     policy = scripts[name].get("policy", "on-failure")
-    t = threading.Thread(target=monitor_script, args=(name, ["python3", path] + args, policy), daemon=True)
+    t = threading.Thread(target=monitor_script, args=(name, ["python3.12", path] + args, policy), daemon=True)
     with lock:
         processes[name]["thread"] = t
     t.start()
@@ -204,22 +215,45 @@ async def add_script(path: str = Form(...), args: str = Form(""), policy: str = 
     return RedirectResponse("/", status_code=303)
 
 
-# -------------------- WebSockets --------------------
+# # -------------------- WebSockets --------------------
+# @app.websocket("/ws/logs/{name}")
+# async def ws_logs(websocket: WebSocket, name: str):
+#     await websocket.accept()
+#     # Subscribe this client to live lines
+#     q: queue.Queue[str] = queue.Queue(maxsize=1000)
+#     with lock:
+#         processes.setdefault(name, {}).setdefault("subscribers", set()).add(q)
+#         # send recent tail for context
+#         tail = processes.get(name, {}).get("output", "")[-2000:]
+#     if tail:
+#         await websocket.send_text(tail)
+#     try:
+#         while True:
+#             # Block until a new line arrives from the producer thread
+#             line = await websocket.loop.run_in_executor(None, q.get)
+#             await websocket.send_text(line)
+#     except WebSocketDisconnect:
+#         pass
+#     finally:
+#         with lock:
+#             subs = processes.get(name, {}).get("subscribers", set())
+#             if q in subs:
+#                 subs.remove(q)
+
+
 @app.websocket("/ws/logs/{name}")
 async def ws_logs(websocket: WebSocket, name: str):
     await websocket.accept()
-    # Subscribe this client to live lines
     q: queue.Queue[str] = queue.Queue(maxsize=1000)
     with lock:
         processes.setdefault(name, {}).setdefault("subscribers", set()).add(q)
-        # send recent tail for context
         tail = processes.get(name, {}).get("output", "")[-2000:]
     if tail:
         await websocket.send_text(tail)
     try:
         while True:
-            # Block until a new line arrives from the producer thread
-            line = await websocket.loop.run_in_executor(None, q.get)
+            loop = asyncio.get_running_loop()
+            line = await loop.run_in_executor(None, q.get)
             await websocket.send_text(line)
     except WebSocketDisconnect:
         pass
