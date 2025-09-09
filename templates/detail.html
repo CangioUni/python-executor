@@ -89,7 +89,41 @@
                         </svg>
                         Back to List
                     </a>
+                    <button id="edit-btn" class="btn btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Edit
+                    </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Edit Form (hidden by default) -->
+        <div id="edit-form-container" class="card mb-4" style="display: none;">
+            <div class="card-header">
+                <h2>Edit Script</h2>
+            </div>
+            <div class="card-body">
+                <form action="/edit/{{ name }}" method="post">
+                    <div class="form-group">
+                        <label for="args" class="form-label">Arguments</label>
+                        <input type="text" id="args" name="args" class="form-input" value="{{ script.args|join(' ') }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="policy" class="form-label">Restart Policy</label>
+                        <select id="policy" name="policy" class="form-select">
+                            <option value="never" {% if script.policy == 'never' %}selected{% endif %}>Never</option>
+                            <option value="on-failure" {% if script.policy == 'on-failure' %}selected{% endif %}>On Failure</option>
+                            <option value="always" {% if script.policy == 'always' %}selected{% endif %}>Always</option>
+                        </select>
+                    </div>
+                    <div class="action-group">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" id="cancel-edit-btn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -194,6 +228,19 @@
                 }
             }, 1000);
         }
+
+        // Edit form toggle
+        const editBtn = document.getElementById('edit-btn');
+        const editFormContainer = document.getElementById('edit-form-container');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+
+        editBtn.addEventListener('click', () => {
+            editFormContainer.style.display = 'block';
+        });
+
+        cancelEditBtn.addEventListener('click', () => {
+            editFormContainer.style.display = 'none';
+        });
     })();
     </script>
 </body>

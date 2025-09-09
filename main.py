@@ -176,7 +176,7 @@ async def start_script(name: str):
     path = scripts[name]["path"]
     args = scripts[name].get("args", [])
     policy = scripts[name].get("policy", "on-failure")
-    t = threading.Thread(target=monitor_script, args=(name, ["python3.12", path] + args, policy), daemon=True)
+    t = threading.Thread(target=monitor_script, args=(name, ["python3", path] + args, policy), daemon=True)
     with lock:
         processes[name]["thread"] = t
     t.start()
@@ -212,6 +212,48 @@ async def add_script(path: str = Form(...), args: str = Form(""), policy: str = 
     name = Path(path).name
     scripts[name] = {"path": path, "args": args.split() if args else [], "policy": policy}
     save_scripts(scripts)
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/edit/{name}")
+async def edit_script(name: str, args: str = Form(...), policy: str = Form(...)):
+    """Update a script's arguments and policy."""
+    scripts = load_scripts()
+    if name in scripts:
+        scripts[name]["args"] = args.split() if args else []
+        scripts[name]["policy"] = policy
+        save_scripts(scripts)
+
+        # Update policy in runtime
+        with lock:
+            if name in processes:
+                processes[name]["policy"] = policy
+
+    return RedirectResponse(f"/script/{name}", status_code=303)
+
+
+@app.post("/delete/{name}")
+async def delete_script(name: str):
+    """Delete a script: stop it and remove from config."""
+    # Stop the script if it's running
+    with lock:
+        if name in processes and processes[name].get("status") == "running":
+            processes[name]["should_stop"] = True
+            proc = processes[name].get("process")
+            if proc and proc.poll() is None:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=2)
+                except Exception:
+                    proc.kill()
+            processes.pop(name, None) # Remove from runtime
+
+    # Remove from config
+    scripts = load_scripts()
+    if name in scripts:
+        scripts.pop(name)
+        save_scripts(scripts)
+
     return RedirectResponse("/", status_code=303)
 
 
