@@ -1,5 +1,6 @@
 import subprocess
 import threading
+import argparse
 import time
 import json
 import queue
@@ -176,7 +177,7 @@ async def start_script(name: str):
     path = scripts[name]["path"]
     args = scripts[name].get("args", [])
     policy = scripts[name].get("policy", "on-failure")
-    t = threading.Thread(target=monitor_script, args=(name, ["python3", path] + args, policy), daemon=True)
+
     with lock:
         processes[name]["thread"] = t
     t.start()
@@ -324,4 +325,10 @@ async def ws_status(websocket: WebSocket):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    parser = argparse.ArgumentParser(description="Flask + D3 tree visualizer")
+    parser.add_argument("--file", default="dependencies.txt", help="Path to dependencies file")
+    parser.add_argument("--host", default="192.168.158.51", help="Host to bind")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind")
+    args = parser.parse_args()
+
+    uvicorn.run(app, host=args.host, port=args.port)
